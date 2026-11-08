@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>mae.exe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500&family=Chakra+Petch:ital,wght@1,600;1,700&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07080f;
+  --line:rgba(255,255,255,.08);
+  --line-2:rgba(255,255,255,.16);
+  --text:#eef0f6;
+  --muted:#8a8fa3;
+  --dim:#555a6e;
+  --magenta:#ff2e88;
+  --cyan:#22d3ee;
+  --sans:"Noto Sans JP","Hiragino Sans","Yu Gothic",sans-serif;
+  --display:"Space Grotesk","Noto Sans JP",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,"Consolas",monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:80px}
+body{
+  background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:300;line-height:1.8;
+  -webkit-font-smoothing:antialiased;
+  background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+  background-size:96px 96px;background-position:-1px -1px;
+}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+.mono{font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--muted)}
+.mono .hl{color:var(--cyan)}
+
+/* header */
+header.bar{position:sticky;top:0;z-index:10;background:rgba(7,8,15,.85);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+header.bar .wrap{display:flex;align-items:center;justify-content:space-between;height:64px;gap:16px}
+.logo{display:flex;align-items:center;font-family:var(--display);font-weight:500;font-size:20px;letter-spacing:.08em;color:var(--magenta);
+  text-shadow:0 0 6px rgba(255,46,136,.55),0 0 18px rgba(255,46,136,.25);animation:ignite 1.6s steps(1,end) .3s both}
+.logo img{display:none;height:44px;width:auto;max-width:280px;object-fit:contain}
+@media (max-width:600px){ .logo img{height:36px} }
+.logo.has-img img{display:block}
+.logo.has-img .logo-text{display:none}
+@keyframes ignite{0%{opacity:.08;text-shadow:none}10%{opacity:1}14%{opacity:.15;text-shadow:none}22%{opacity:1}26%{opacity:.3;text-shadow:none}34%,100%{opacity:1}}
+/* hero (KV) */
+.hero{padding:120px 0 96px;border-bottom:1px solid var(--line)}
+.hero .mono{margin-bottom:28px}
+.hero h1{font-family:var(--display);font-weight:300;font-size:clamp(44px,8.4vw,112px);line-height:1.02;letter-spacing:-.02em}
+.hero h1 .accent{position:relative;white-space:nowrap}
+.hero h1 .accent::after{content:"";position:absolute;left:0;right:0;bottom:.06em;height:2px;background:var(--cyan);opacity:.9}
+.hero .sub{margin-top:40px;display:grid;grid-template-columns:auto 1fr;gap:32px;align-items:end}
+.hero .name{font-family:var(--display);font-size:15px;letter-spacing:.06em}
+.hero .name small{display:block;font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:.1em}
+.hero .copy{font-size:clamp(16px,2vw,20px);font-weight:300;letter-spacing:.04em}
+.caret{display:inline-block;width:.55em;height:1.1em;vertical-align:-.15em;background:var(--cyan);margin-left:4px;animation:blink 1.1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.works-label{padding-top:56px}
+.works-label + section.cat{padding-top:24px}
+
+/* category */
+section.cat{padding:72px 0;border-bottom:1px solid var(--line)}
+.cat-head{display:grid;grid-template-columns:64px 1fr auto;align-items:end;gap:16px;margin-bottom:36px;padding-bottom:20px;border-bottom:1px solid var(--line-2)}
+.cat-head .no{font-family:var(--mono);font-size:13px;color:var(--magenta);padding-bottom:10px}
+.cat-head .mono{padding-bottom:10px}
+.cat-head h2{font-family:"Chakra Petch",var(--display);font-style:italic;font-weight:700;font-size:clamp(48px,7.5vw,96px);line-height:.95;letter-spacing:.01em}
+.cat-head h2 small{display:block;font-family:var(--sans);font-style:normal;font-size:14px;font-weight:400;color:var(--muted);letter-spacing:.08em;margin-top:10px}
+
+/* cards */
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:32px 24px}
+.card{display:block;position:relative}
+.thumb{position:relative;aspect-ratio:16/9;overflow:hidden;border:1px solid var(--line-2);background:#0b0d17;transition:border-color .25s,box-shadow .25s}
+.thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1}
+/* 画像なしのときの仮枠 */
+.thumb .ph{position:absolute;inset:0;display:grid;place-items:center;
+  background:
+    linear-gradient(to top right,transparent calc(50% - .5px),var(--line) 50%,transparent calc(50% + .5px)),
+    linear-gradient(to bottom right,transparent calc(50% - .5px),var(--line) 50%,transparent calc(50% + .5px));}
+.thumb .ph span{font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:var(--dim);background:#0b0d17;padding:4px 10px;border:1px solid var(--line)}
+.card:hover .thumb,.card:focus-visible .thumb{border-color:var(--cyan);box-shadow:0 0 0 1px var(--cyan),0 0 14px rgba(34,211,238,.35)}
+.meta{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-top:14px}
+.meta h3{font-family:var(--display);font-weight:400;font-size:18px;letter-spacing:-.005em}
+.meta .id{font-family:var(--mono);font-size:11px;color:var(--dim);white-space:nowrap}
+.card p.desc{font-size:13px;color:var(--muted);margin-top:2px}
+.status{position:absolute;top:10px;left:10px;z-index:2;font-family:var(--mono);font-size:10px;letter-spacing:.12em;padding:3px 8px;background:rgba(7,8,15,.85);border:1px solid rgba(255,46,136,.5);color:var(--magenta)}
+.status.soon{border-color:var(--line-2);color:var(--muted)}
+
+footer{padding:40px 0 56px}
+footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+
+@media (max-width:900px){ .grid{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media (max-width:600px){
+  .wrap{padding:0 16px}
+  body{background-size:64px 64px}
+  .hero{padding:72px 0 64px}
+  .hero .sub{grid-template-columns:1fr;gap:16px}
+  .works-label{padding-top:40px}
+  section.cat{padding:48px 0}
+  .cat-head{grid-template-columns:32px 1fr auto;gap:10px}
+  .grid{grid-template-columns:1fr;gap:28px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="wrap">
+    <!-- ロゴ画像を assets/logo.png に置くと、文字のロゴから画像に自動で切り替わります -->
+    <a href="#top" class="logo" aria-label="mae.exe トップへ"><img src="assets/logo.png" alt="mae.exe" onload="this.parentNode.classList.add('has-img')" onerror="this.remove()"><span class="logo-text">mae.exe</span></a>
+  </div>
+</header>
+
+<main id="top">
+
+  <section class="hero">
+    <div class="wrap">
+      <p class="mono">// portfolio <span class="hl">—</span> 2026</p>
+      <h1>Engineer for<br><span class="accent">entertainment.</span></h1>
+      <div class="sub">
+        <p class="name">メイ（Mae）<small>ENGINEER / CREATOR</small></p>
+        <p class="copy"><span id="typed">設計から、遊べるところまで。</span><span class="caret" aria-hidden="true"></span></p>
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap works-label"><p class="mono">// works</p></div>
+
+  <!--
+    サムネイル画像の入れ方：
+    各カードの <img src="thumbs/xxx.jpg"> の場所に画像を置くと、自動で表示されます。
+    画像が無いあいだは「NO IMAGE」の仮枠が出ます。推奨サイズ 1280×720（16:9）。
+  -->
+
+  <section class="cat" id="web">
+    <div class="wrap">
+      <div class="cat-head">
+        <span class="no">01</span>
+        <h2>WEB<small>Webサイト・LP</small></h2>
+        <span class="mono">06 items</span>
+      </div>
+      <div class="grid">
+        <a class="card" href="#"><div class="thumb"><div class="ph"><span>NO IMAGE</span></div><img src="thumbs/web-01.jpg" alt="" onerror="this.remove()"><span class="status">WIP</span></div>
+          <div class="meta"><h3>【仮】WEB 01</h3><span class="id">web-01</span></div><p class="desc">【仮】説明文</p></a>
+        <a class="card" href="#"><div class="thumb"><div class="ph"><span>NO IMAGE</span></div><img src="thumbs/web-02.jpg" alt="" onerror="this.remove()"><span class="status">WIP</span></div>
+          <div class="meta"><h3>【仮】WEB 02</h3><span class="id">web-02</span></div><p class="desc">【仮】説明文</p></a>
+        <a class="card" href="#"><div class="thumb"><div class="ph"><span>NO IMAGE</span></div><img src="thumbs/web-03.jpg" alt="" onerror="this.remove()"><span class="status">WIP</span></div>
+          <div class="meta"><h3>【仮】WEB 03</h3><span class="id">web-03</span></div><p class="desc">【仮】説明文</p></a>
+        <a class="card" href="#"><div class="thumb"><div class="ph"><span>NO IMAGE</span></div><img src="thumbs/web-04.jpg" alt="" onerror="this.remove()"><span class="status">WIP</span></div>
+          <div class="meta"><h3>【仮】WEB 04</h3><span class="id">web-04</span></div><p class="desc">【仮】説明文</p></a>
+        <a class="card" href="#"><div class="thumb"><div class="ph"><span>NO IMAGE</span></div><img src="thumbs/web-05.jpg" alt="" onerror="this.remove()"><span class="status">WIP</span></div>
+          <div class="meta"><h3>【仮】WEB 05</h3><span class="id">web-05</span></div><p class="desc">【仮】説明文</p></a>
+        <a class="card" href="#"><div class="thumb"><div class="ph"><span>NO IMAGE</span></div><img src="thumbs/web-06.jpg" alt="" onerror="this.remove()"><span class="status">WIP</span></div>
+          <div class="meta"><h3>【仮】WEB 06</h3><span class="id">web-06</span></div><p class="desc">【仮】説明文</p></a>
+      </div>
+    </div>
+  </section>
+
+  <section class="cat" id="game">
+    <div class="wrap">
+      <div class="cat-head">
+        <span class="no">02</span>
+        <h2>GAME<small>ブラウザゲーム</small></h2>
+        <span class="mono">03 items</span>
+      </div>
+      <div class="grid">
+        <a class="card" href="#"><div class="thumb"><div class="ph"><span>NO IMAGE</span></div><img src="thumbs/game-01.jpg" alt="" onerror="this.remove()"><span class="status">WIP</span></div>
+          <div class="meta"><h3>【仮】GAME 01</h3><span class="id">game-01</span></div><p class="desc">【仮】説明文</p></a>
+        <a class="card" href="#"><div class="thumb"><div class="ph"><span>NO IMAGE</span></div><img src="thumbs/game-02.jpg" alt="" onerror="this.remove()"><span class="status">WIP</span></div>
+          <div class="meta"><h3>【仮】GAME 02</h3><span class="id">game-02</span></div><p class="desc">【仮】説明文</p></a>
+        <a class="card" href="#"><div class="thumb"><div class="ph"><span>NO IMAGE</span></div><img src="thumbs/game-03.jpg" alt="" onerror="this.remove()"><span class="status">WIP</span></div>
+          <div class="meta"><h3>【仮】GAME 03</h3><span class="id">game-03</span></div><p class="desc">【仮】説明文</p></a>
+      </div>
+    </div>
+  </section>
+
+  <section class="cat" id="3dcg">
+    <div class="wrap">
+      <div class="cat-head">
+        <span class="no">03</span>
+        <h2>3DCG<small>3Dモデル（Three.js）</small></h2>
+        <span class="mono">03 items</span>
+      </div>
+      <div class="grid">
+        <a class="card" href="#"><div class="thumb"><div class="ph"><span>NO IMAGE</span></div><img src="thumbs/3d-01.jpg" alt="" onerror="this.remove()"><span class="status">WIP</span></div>
+          <div class="meta"><h3>【仮】3D 01</h3><span class="id">3d-01</span></div><p class="desc">【仮】説明文</p></a>
+        <a class="card" href="#"><div class="thumb"><div class="ph"><span>NO IMAGE</span></div><img src="thumbs/3d-02.jpg" alt="" onerror="this.remove()"><span class="status">WIP</span></div>
+          <div class="meta"><h3>【仮】3D 02</h3><span class="id">3d-02</span></div><p class="desc">【仮】説明文</p></a>
+        <a class="card" href="#"><div class="thumb"><div class="ph"><span>NO IMAGE</span></div><img src="thumbs/3d-03.jpg" alt="" onerror="this.remove()"><span class="status">WIP</span></div>
+          <div class="meta"><h3>【仮】3D 03</h3><span class="id">3d-03</span></div><p class="desc">【仮】説明文</p></a>
+      </div>
+    </div>
+  </section>
+
+  <section class="cat" id="tool">
+    <div class="wrap">
+      <div class="cat-head">
+        <span class="no">04</span>
+        <h2>TOOL<small>ツール</small></h2>
+        <span class="mono">coming soon</span>
+      </div>
+      <div class="grid">
+        <div class="card"><div class="thumb"><div class="ph"><span>NO IMAGE</span></div><img src="thumbs/tool-01.jpg" alt="" onerror="this.remove()"><span class="status soon">SOON</span></div>
+          <div class="meta"><h3>【仮】TOOL 01</h3><span class="id">tool-01</span></div><p class="desc">準備中</p></div>
+        <div class="card"><div class="thumb"><div class="ph"><span>NO IMAGE</span></div><img src="thumbs/tool-02.jpg" alt="" onerror="this.remove()"><span class="status soon">SOON</span></div>
+          <div class="meta"><h3>【仮】TOOL 02</h3><span class="id">tool-02</span></div><p class="desc">準備中</p></div>
+        <div class="card"><div class="thumb"><div class="ph"><span>NO IMAGE</span></div><img src="thumbs/tool-03.jpg" alt="" onerror="this.remove()"><span class="status soon">SOON</span></div>
+          <div class="meta"><h3>【仮】TOOL 03</h3><span class="id">tool-03</span></div><p class="desc">準備中</p></div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <p class="mono">© 2026 mae.exe</p>
+    <p class="mono">built by hand <span class="hl">·</span> single-file HTML</p>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var el = document.getElementById('typed');
+  if (!el) return;
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  var text = el.textContent, i = 0;
+  el.textContent = '';
+  setTimeout(function tick(){
+    el.textContent = text.slice(0, ++i);
+    if (i < text.length) setTimeout(tick, 70);
+  }, 900);
+})();
+</script>
+</body>
+</html>
