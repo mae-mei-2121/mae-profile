@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>mae.exe</title>
+<!-- 検索エンジンに載せない（URLを知っている人だけが見る想定） -->
+<meta name="robots" content="noindex, nofollow, noarchive, noimageindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500&family=Chakra+Petch:ital,wght@1,600;1,700&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
@@ -89,6 +91,7 @@ section.cat{padding:72px 0;border-bottom:1px solid var(--line)}
 
 footer{padding:40px 0 56px}
 footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+footer .note{width:100%;font-size:11px;color:var(--dim);letter-spacing:.04em}
 
 @media (max-width:900px){ .grid{grid-template-columns:repeat(2,minmax(0,1fr))} }
 @media (max-width:600px){
@@ -216,8 +219,9 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 
 <footer>
   <div class="wrap">
-    <p class="mono">© 2026 mae.exe</p>
+    <p class="mono">© 2026 mae.exe <span class="hl">·</span> All rights reserved.</p>
     <p class="mono">built by hand <span class="hl">·</span> single-file HTML</p>
+    <p class="note">掲載している文章・画像・プログラムの無断転載・複製を禁止します。</p>
   </div>
 </footer>
 
