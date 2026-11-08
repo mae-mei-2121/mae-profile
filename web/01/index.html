@@ -28,6 +28,9 @@ input,select{font:inherit;color:inherit}
 .logo .mark::after{content:"";position:absolute;left:6px;bottom:-6px;border:6px solid transparent;border-top-color:var(--accent);border-left-color:var(--accent);border-bottom:0;border-right-width:4px}
 .logo b{font-family:var(--serif);font-size:21px;font-weight:700;letter-spacing:.08em}
 .logo small{font-size:11px;color:var(--sub);letter-spacing:.06em;margin-left:4px}
+.logo .logo-img{display:none;height:40px;width:auto}
+.logo.has-img .logo-img{display:block}
+.logo.has-img .mark,.logo.has-img b{display:none}
 .head-right{margin-left:auto;display:flex;gap:8px}
 .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:999px;font-size:13px;font-weight:500;border:1px solid var(--line);background:var(--surface);transition:background .15s,border-color .15s}
 .btn:hover{border-color:var(--ink)}
@@ -280,6 +283,7 @@ button.tag:hover{border-color:var(--sub)}
 }
 @media (max-width:560px){
   .logo small{display:none}
+  .logo .logo-img{height:34px}
   .head-right .btn:not(.primary){display:none}
   .grid{grid-template-columns:repeat(2,minmax(0,1fr))}
   .pick .card{grid-template-columns:92px minmax(0,1fr);gap:14px;padding:12px}
@@ -522,7 +526,7 @@ function card(w){
 }
 function header(){
   return `<header class="site-head"><div class="in">
-    <a class="logo" href="#/"><span class="mark">既</span><b>既読文庫</b><small>チャットで読む小説投稿サイト</small></a>
+    <a class="logo" href="#/" aria-label="既読文庫 トップへ"><img class="logo-img" src="img/logo.png" alt="既読文庫" onload="this.parentNode.classList.add('has-img')" onerror="this.remove()"><span class="mark">既</span><b>既読文庫</b><small>チャットで読む小説投稿サイト</small></a>
     <div class="head-right"><button class="btn" data-fake>ログイン</button><button class="btn primary" data-fake>作品を投稿する</button></div>
   </div></header>`;
 }
