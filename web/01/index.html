@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>既読文庫 — チャットで読む小説投稿サイト</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#f6f4ef; --surface:#ffffff; --ink:#23262e; --sub:#6b6f7a; --faint:#9a9ea8; --line:#e4e1d9;
+  --accent:#2f4b9a; --accent-soft:#e8ecf7; --kidoku:#e0663a;
+  --sans:"Noto Sans JP","Hiragino Sans","Yu Gothic",sans-serif;
+  --serif:"Noto Serif JP","Hiragino Mincho ProN","Yu Mincho",serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);line-height:1.7;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+input,select{font:inherit;color:inherit}
+
+/* ===== サイト共通 ===== */
+.site-head{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+.site-head .in{max-width:1200px;margin:0 auto;padding:0 16px;height:60px;display:flex;align-items:center;gap:16px}
+.logo{display:flex;align-items:center;gap:10px}
+.logo .mark{position:relative;width:34px;height:28px;background:var(--accent);border-radius:8px;display:grid;place-items:center;color:#fff;font-family:var(--serif);font-weight:700;font-size:15px}
+.logo .mark::after{content:"";position:absolute;left:6px;bottom:-6px;border:6px solid transparent;border-top-color:var(--accent);border-left-color:var(--accent);border-bottom:0;border-right-width:4px}
+.logo b{font-family:var(--serif);font-size:21px;font-weight:700;letter-spacing:.08em}
+.logo small{font-size:11px;color:var(--sub);letter-spacing:.06em;margin-left:4px}
+.head-right{margin-left:auto;display:flex;gap:8px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:999px;font-size:13px;font-weight:500;border:1px solid var(--line);background:var(--surface);transition:background .15s,border-color .15s}
+.btn:hover{border-color:var(--ink)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{background:#243c7d}
+
+.layout{max-width:1200px;margin:0 auto;padding:24px 16px 64px;display:grid;grid-template-columns:240px minmax(0,1fr);gap:28px}
+.side{position:sticky;top:84px;align-self:start;display:flex;flex-direction:column;gap:20px;max-height:calc(100vh - 100px);overflow-y:auto;scrollbar-width:thin}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px}
+.box h3{font-size:12px;color:var(--sub);font-weight:700;letter-spacing:.1em;margin-bottom:10px}
+.search{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--paper)}
+.search input{border:0;background:none;outline:none;width:100%;font-size:14px}
+.search:focus-within{border-color:var(--accent)}
+.genres{list-style:none;display:flex;flex-direction:column;gap:2px}
+.genres button{width:100%;display:flex;justify-content:space-between;padding:6px 10px;border-radius:6px;font-size:14px;text-align:left}
+.genres button:hover{background:var(--paper)}
+.genres button.on{background:var(--accent-soft);color:var(--accent);font-weight:700}
+.genres button span{color:var(--faint);font-size:12px}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font-size:12px;padding:3px 10px;border-radius:999px;background:var(--paper);border:1px solid var(--line);color:var(--sub)}
+button.tag:hover{border-color:var(--sub)}
+.tag.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.sort{display:flex;flex-direction:column;gap:6px;font-size:14px}
+.sort label{display:flex;gap:8px;align-items:center;cursor:pointer}
+
+.main{display:flex;flex-direction:column;gap:36px;min-width:0}
+.sec-title{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid var(--ink)}
+.sec-title h2{font-size:18px;font-weight:700;letter-spacing:.04em}
+.sec-title small{font-size:12px;color:var(--sub)}
+
+.hero{border-radius:16px;padding:28px 28px;background:var(--ink);color:#fff;display:grid;grid-template-columns:1fr auto;gap:24px;align-items:center;overflow:hidden;position:relative}
+.hero h1{font-family:var(--serif);font-size:clamp(20px,2.6vw,28px);line-height:1.5;font-weight:700}
+.hero p{font-size:13px;color:#b9bdc8;margin-top:8px}
+.hero .demo{display:flex;flex-direction:column;gap:8px;min-width:220px}
+.hero .demo .d-narr{font-family:var(--serif);font-size:12px;color:#c9ccd3;border-left:2px solid #555;padding-left:10px}
+.hero .demo .d-say{align-self:flex-start;background:#fff;color:var(--ink);font-size:13px;padding:6px 12px;border-radius:14px 14px 14px 4px}
+.hero .demo .d-me{align-self:flex-end;display:flex;align-items:flex-end;gap:6px}
+.hero .demo .d-me b{background:var(--kidoku);font-size:13px;padding:6px 12px;border-radius:14px 14px 4px 14px;font-weight:400}
+.hero .demo .d-me small{font-size:10px;color:#9aa0ad}
+
+/* カード */
+.pick{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.pick .card{height:100%}
+.pick .card.post{display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:8px;border-style:dashed;background:transparent;color:var(--sub)}
+.pick .card.post b{font-family:var(--serif);font-size:17px;color:var(--ink)}
+.pick .card.post small{font-size:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:20px 16px}
+.card{display:flex;flex-direction:column;gap:8px;cursor:pointer;text-align:left}
+.card:hover .cover{transform:translateY(-3px);box-shadow:0 10px 24px rgba(0,0,0,.14)}
+.card .t{font-weight:700;font-size:14px;line-height:1.5}
+.card .a{font-size:12px;color:var(--sub)}
+.card .m{display:flex;gap:10px;font-size:11px;color:var(--faint)}
+/* おすすめ：左に表紙、右に説明 */
+.pick .card{display:grid;grid-template-columns:132px minmax(0,1fr);gap:20px;align-items:start;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px}
+.pick .card:hover{border-color:#c9c4b8}
+.pick .badge{display:none}
+.pick .info{display:flex;flex-direction:column;gap:6px;min-width:0}
+.pick .info .g{font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--kidoku)}
+.pick .info .t{font-family:var(--serif);font-size:20px;line-height:1.4}
+.pick .info .a{font-size:12px;color:var(--sub)}
+.pick .info .c{font-family:var(--serif);font-size:14px;line-height:1.7;margin-top:4px}
+.pick .info .s{font-size:12px;color:var(--sub);line-height:1.7;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.pick .info .foot{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:6px}
+.pick .info .go{margin-left:auto;font-size:12px;font-weight:700;color:var(--accent);white-space:nowrap}
+
+.cover{position:relative;aspect-ratio:3/4;border-radius:8px;overflow:hidden;color:#fff;transition:transform .2s,box-shadow .2s;
+  background:linear-gradient(160deg,var(--c1),var(--c2))}
+.cover .ct{position:absolute;inset:14px 14px 30px;writing-mode:vertical-rl;font-family:var(--serif);font-weight:700;font-size:17px;line-height:1.4;letter-spacing:.08em;text-shadow:0 1px 6px rgba(0,0,0,.25)}
+.cover .cg{position:absolute;left:10px;bottom:8px;font-size:10px;letter-spacing:.1em;opacity:.85}
+.cover img{position:absolute;inset:0;width:100%;height:100%;display:none}
+.cover.has-img img.fg{display:block;object-fit:cover;object-position:50% 30%}
+.cover.has-img .ct,.cover.has-img .cg{display:none}
+.badge{position:absolute;top:8px;right:8px;font-size:10px;font-weight:700;letter-spacing:.1em;padding:2px 8px;border-radius:4px;z-index:2}
+.badge.sample{background:var(--kidoku);color:#fff}
+.badge.dummy{background:rgba(255,255,255,.92);color:#555;border:1px solid #999}
+.cover.dummy::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(45deg,rgba(255,255,255,.0) 0 10px,rgba(255,255,255,.14) 10px 20px)}
+.cover.dummy .ct{opacity:.85}
+
+/* ランキング */
+.rank{list-style:none;background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.rank li{border-bottom:1px solid var(--line)}
+.rank li:last-child{border-bottom:0}
+.rank .row{display:grid;grid-template-columns:44px 48px minmax(0,1fr) auto;gap:14px;align-items:center;padding:10px 16px;width:100%;text-align:left}
+.rank .row:hover{background:var(--paper)}
+.rank .no{font-family:var(--serif);font-size:20px;font-weight:700;text-align:center;color:var(--faint)}
+.rank li:nth-child(-n+3) .no{color:var(--kidoku)}
+.rank .cover{aspect-ratio:3/4;border-radius:4px}
+.rank .cover .ct,.rank .cover .cg{display:none}
+.rank .cover .badge{display:none}
+.rank .t{font-weight:700;font-size:14px}
+.rank .t .mini{font-size:10px;font-weight:700;padding:1px 6px;border-radius:3px;margin-left:8px;vertical-align:2px}
+.mini.sample{background:var(--kidoku);color:#fff}
+.mini.dummy{border:1px solid #aaa;color:#777}
+.rank .a{font-size:12px;color:var(--sub)}
+.rank .pv{font-size:12px;color:var(--sub);text-align:right;white-space:nowrap}
+
+.empty{padding:40px;text-align:center;color:var(--sub);background:var(--surface);border:1px dashed var(--line);border-radius:12px}
+
+.site-foot{border-top:1px solid var(--line);background:var(--surface);padding:24px 16px;text-align:center;font-size:12px;color:var(--sub)}
+.site-foot a{color:var(--accent)}
+
+/* ===== 作品ページ ===== */
+.work{max-width:960px;margin:0 auto;padding:24px 16px 64px}
+.crumb{font-size:12px;color:var(--sub);margin-bottom:16px}
+.crumb a:hover{color:var(--accent)}
+.work-top{display:grid;grid-template-columns:220px minmax(0,1fr);gap:32px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:24px}
+.work-top h1{font-family:var(--serif);font-size:clamp(22px,3vw,30px);line-height:1.4}
+.work-top .by{color:var(--sub);font-size:14px;margin-top:6px}
+.work-top .catch{font-family:var(--serif);font-size:16px;margin-top:16px;padding-left:12px;border-left:3px solid var(--kidoku)}
+.stats{display:flex;flex-wrap:wrap;gap:20px;margin-top:16px;font-size:12px;color:var(--sub)}
+.stats b{display:block;font-size:18px;color:var(--ink)}
+.work-top .acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+.work-sec{margin-top:24px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:24px}
+.work-sec h2{font-size:15px;margin-bottom:12px}
+.work-sec p{font-size:14px;white-space:pre-line}
+.toc{list-style:none}
+.toc li{border-top:1px solid var(--line)}
+.toc a,.toc span.ng{display:flex;justify-content:space-between;gap:12px;padding:12px 4px;font-size:14px}
+.toc a:hover{color:var(--accent)}
+.toc span.ng{color:var(--faint)}
+.toc small{font-size:12px;color:var(--faint)}
+
+/* ===== 読む画面 ===== */
+.reader{min-height:100vh;background:var(--r-bg);color:var(--r-text);--fs:16px}
+.reader.size-s{--fs:14px}.reader.size-l{--fs:18px}
+.r-bar{position:sticky;top:0;z-index:30;background:var(--r-bar);backdrop-filter:blur(8px);border-bottom:1px solid var(--r-line)}
+.r-bar .in{max-width:680px;margin:0 auto;padding:0 12px;height:56px;display:flex;align-items:center;gap:10px}
+.r-back{font-size:20px;padding:4px 8px;color:var(--r-sub)}
+.r-title{flex:1;min-width:0;font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.r-title small{display:block;font-size:11px;font-weight:400;color:var(--r-sub)}
+.r-tool{font-size:11px;padding:6px 10px;border-radius:999px;border:1px solid var(--r-line);color:var(--r-sub);white-space:nowrap}
+.r-tool.on{border-color:var(--r-accent);color:var(--r-accent)}
+.r-progress{position:fixed;top:0;left:0;height:2px;background:var(--r-accent);z-index:40;width:0}
+.r-body{max-width:640px;margin:0 auto;padding:28px 16px 80px;font-size:var(--fs)}
+.r-head{text-align:center;margin:12px 0 36px}
+.r-head small{font-size:12px;color:var(--r-sub);letter-spacing:.2em}
+.r-head h1{font-family:var(--serif);font-size:1.4em;margin-top:6px}
+
+.blk{margin:0 0 14px}
+.narr{font-family:var(--serif);color:var(--r-narr);line-height:2.05;margin:22px 0;padding:0 4px}
+.sys{text-align:center}
+.sys span{display:inline-block;font-size:.72em;padding:3px 12px;border-radius:999px;background:var(--r-sys);color:var(--r-sub)}
+.say{display:flex;gap:10px;align-items:flex-start}
+.say .av{flex:0 0 36px;height:36px;border-radius:50%;background:var(--c);color:#fff;display:grid;place-items:center;font-size:14px;font-weight:700}
+.say .col{min-width:0;max-width:78%}
+.say .nm{font-size:.72em;color:var(--r-sub);margin:0 0 3px 4px}
+.bub{display:inline-block;padding:9px 14px;border-radius:4px 18px 18px 18px;background:var(--r-other);color:var(--r-other-text);line-height:1.6;word-break:break-word;font-size:.95em}
+.say.me{justify-content:flex-end}
+.say.me .row{display:flex;align-items:flex-end;gap:6px;justify-content:flex-end}
+.say.me .bub{border-radius:18px 4px 18px 18px;background:var(--r-me);color:var(--r-me-text)}
+.say .rd{font-size:.66em;color:var(--r-sub);white-space:nowrap}
+.dots{display:inline-flex;gap:4px;padding:4px 2px}
+.dots i{width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.4;animation:dot 1s infinite}
+.dots i:nth-child(2){animation-delay:.15s}.dots i:nth-child(3){animation-delay:.3s}
+@keyframes dot{0%,60%,100%{opacity:.25;transform:translateY(0)}30%{opacity:.9;transform:translateY(-3px)}}
+.say.other:not(.typed) .txt{display:none}
+.say.other.typed .dots{display:none}
+.say.other .bub{transition:opacity .25s ease,transform .25s ease}
+.say.other.paused .bub{opacity:0;transform:scale(.85)}
+.say.other.paused .dots i{animation-play-state:paused}
+.say .gone{display:none;font-size:.85em;color:var(--r-sub)}
+.say.unsend.unsent .bub{background:transparent;border:1px dashed var(--r-line)}
+.say.unsend.unsent .txt{display:none}
+.say.unsend.unsent .gone{display:inline}
+.say.unsend.unsent.static .txt{display:block;text-decoration:line-through;opacity:.45;font-size:.85em}
+.say.ghost .bub{background:#4a1f22;color:#ffd9d9;letter-spacing:.06em;animation:ghost 3s infinite steps(1)}
+@keyframes ghost{0%,92%,100%{transform:none;filter:none}93%{transform:translateX(2px);filter:blur(.6px)}96%{transform:translateX(-2px)}}
+.typing .bub{color:var(--r-sub)}
+.typing .tx{font-size:.72em;color:var(--r-sub);margin:4px 0 0 4px}
+
+.notice{display:flex;gap:10px;align-items:center;background:var(--r-sys);border:1px solid var(--r-line);border-radius:14px;padding:10px 12px;margin:20px 0}
+.notice .ic{flex:0 0 34px;height:34px;border-radius:9px;background:var(--accent);color:#fff;display:grid;place-items:center;font-family:var(--serif);font-weight:700}
+.notice .nt{font-size:.8em;line-height:1.5;min-width:0}
+.notice .nt b{display:block;font-size:.85em;color:var(--r-sub);font-weight:500}
+
+.illust{margin:32px -4px}
+.illust .frame{position:relative;aspect-ratio:4/3;border-radius:6px;overflow:hidden;background:var(--r-sys);border:1px solid var(--r-line)}
+.illust .frame img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1}
+.illust .ph{position:absolute;inset:0;display:grid;place-items:center;text-align:center;color:var(--r-sub);font-size:12px;
+  background:linear-gradient(to top right,transparent calc(50% - .5px),var(--r-line) 50%,transparent calc(50% + .5px)),linear-gradient(to bottom right,transparent calc(50% - .5px),var(--r-line) 50%,transparent calc(50% + .5px))}
+.illust .ph span{background:var(--r-sys);padding:6px 12px;border:1px solid var(--r-line);border-radius:4px}
+.illust .cap{font-size:.75em;color:var(--r-sub);text-align:center;margin-top:8px}
+
+.r-end{margin-top:56px;text-align:center;padding-top:28px;border-top:1px solid var(--r-line)}
+.r-end p{font-family:var(--serif);font-size:1.05em;letter-spacing:.2em}
+.r-end small{display:block;font-size:12px;color:var(--r-sub);margin-top:6px}
+.r-end .acts{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:20px}
+.r-end .btn{background:transparent;color:var(--r-text);border-color:var(--r-line)}
+
+/* 出てくる演出 */
+.fxon .blk{transition:opacity .45s ease,transform .45s cubic-bezier(.2,.8,.2,1)}
+.fxon .blk:not(.in){opacity:0;transform:translateY(14px)}
+.fxon .say:not(.in){transform:translateY(10px) scale(.94)}
+.fxon .say.other{transform-origin:left top}
+.fxon .say.me{transform-origin:right top}
+.fxon .illust:not(.in){transform:none}
+.fxon .illust.in.anim.fx-dark .frame{animation:flickIn 1s steps(1)}
+.fxon .illust.in.anim.fx-glow .frame{animation:glowIn 1.2s ease}
+.fxon .illust.in.anim.fx-glitch .frame{animation:glitchIn .8s steps(2)}
+@keyframes flickIn{0%{opacity:0}15%{opacity:1}25%{opacity:.1}40%{opacity:1}50%{opacity:.3}60%,100%{opacity:1}}
+@keyframes glowIn{0%{filter:blur(12px) brightness(1.8);opacity:0}100%{filter:none;opacity:1}}
+@keyframes glitchIn{0%{clip-path:inset(0 0 70% 0);transform:translateX(-8px)}25%{clip-path:inset(40% 0 20% 0);transform:translateX(6px)}50%{clip-path:inset(10% 0 50% 0);transform:translateX(-4px)}75%{clip-path:inset(60% 0 0 0);transform:translateX(3px)}100%{clip-path:inset(0);transform:none}}
+
+.fx-layer{position:fixed;inset:0;z-index:50;pointer-events:none;opacity:0}
+.fx-layer.dark{background:#000;animation:fxDark 1.3s steps(1) forwards}
+@keyframes fxDark{0%{opacity:0}10%{opacity:.95}22%{opacity:.4}30%{opacity:.97}55%{opacity:.85}70%{opacity:.97}100%{opacity:0}}
+.fx-layer.glow{background:radial-gradient(circle at 50% 50%,rgba(255,240,225,.95),rgba(255,220,200,.55) 45%,rgba(255,255,255,0) 75%);animation:fxGlow 1.1s ease forwards}
+@keyframes fxGlow{0%{opacity:0}35%{opacity:1}100%{opacity:0}}
+.fx-layer.glitch{background:repeating-linear-gradient(0deg,rgba(92,200,255,.16) 0 2px,transparent 2px 5px),linear-gradient(90deg,rgba(255,0,90,.12),rgba(0,200,255,.12));animation:fxGlitch .9s steps(1) forwards}
+@keyframes fxGlitch{0%{opacity:1;transform:translateX(0)}15%{transform:translateX(-12px)}30%{transform:translateX(8px);opacity:.6}45%{transform:translateX(-4px);opacity:1}60%{transform:none;opacity:.5}80%{opacity:.9}100%{opacity:0}}
+.shake{animation:shake .5s steps(2)}
+@keyframes shake{25%{transform:translateX(-3px)}50%{transform:translateX(3px)}75%{transform:translateX(-2px)}}
+
+/* プッシュ通知風のトースト */
+.push{position:fixed;top:12px;left:50%;z-index:60;width:min(360px,calc(100% - 24px));transform:translate(-50%,-140%);transition:transform .45s cubic-bezier(.2,.9,.2,1);
+  background:rgba(250,250,252,.96);color:#222;border-radius:16px;padding:10px 12px;box-shadow:0 10px 30px rgba(0,0,0,.25);display:flex;gap:10px;align-items:center;font-size:13px}
+.push.on{transform:translate(-50%,0)}
+.push .ic{flex:0 0 32px;height:32px;border-radius:8px;background:var(--accent);color:#fff;display:grid;place-items:center;font-family:var(--serif);font-weight:700}
+.push b{display:block;font-size:11px;color:#777;font-weight:500}
+
+/* ダイアログ・トースト */
+.modal{position:fixed;inset:0;z-index:70;background:rgba(20,22,28,.5);display:grid;place-items:center;padding:16px}
+.modal .panel{background:var(--surface);border-radius:16px;max-width:420px;width:100%;padding:24px}
+.modal h3{font-size:17px;margin-bottom:8px}
+.modal p{font-size:14px;color:var(--sub)}
+.modal ul{list-style:none;margin:16px 0;display:flex;flex-direction:column;gap:8px}
+.modal ul a{display:block;padding:10px 12px;border:1px solid var(--line);border-radius:8px;font-size:14px;font-weight:700}
+.modal ul a:hover{border-color:var(--accent);color:var(--accent)}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:80;background:var(--ink);color:#fff;font-size:13px;padding:10px 18px;border-radius:999px;opacity:0;transition:opacity .25s;pointer-events:none}
+.toast.on{opacity:1}
+
+/* テーマ */
+.theme-horror{--r-bg:#0f1115;--r-text:#dcdee3;--r-narr:#c4c7cf;--r-sub:#7d828e;--r-line:#2a2e37;--r-other:#20232b;--r-other-text:#e6e7ea;--r-me:#3b404c;--r-me-text:#f1f1f3;--r-sys:#1a1d24;--r-accent:#d14b3d;--r-bar:rgba(15,17,21,.9)}
+.theme-romance{--r-bg:#fbf4ef;--r-text:#3a2e2a;--r-narr:#4a3b35;--r-sub:#a08a80;--r-line:#ecdcd2;--r-other:#ffffff;--r-other-text:#3a2e2a;--r-me:#e8735f;--r-me-text:#fff;--r-sys:#f4e6dd;--r-accent:#e8735f;--r-bar:rgba(251,244,239,.92)}
+.theme-sf{--r-bg:#0b1222;--r-text:#dbe6ff;--r-narr:#c3d2f2;--r-sub:#7486ad;--r-line:#1f2c4a;--r-other:#17223c;--r-other-text:#dbe6ff;--r-me:#2b6fd6;--r-me-text:#fff;--r-sys:#121c33;--r-accent:#5cc8ff;--r-bar:rgba(11,18,34,.9)}
+
+/* スマホ */
+@media (max-width:860px){
+  .layout{grid-template-columns:1fr;gap:20px}
+  .side{position:static;max-height:none;overflow:visible;min-width:0}
+  .side .box{min-width:0}
+  .genres{flex-direction:row;overflow-x:auto;gap:6px;padding-bottom:4px}
+  .genres button{white-space:nowrap;border:1px solid var(--line);border-radius:999px;padding:4px 12px;gap:6px}
+  .side .box.sortbox{display:none}
+  .pick{grid-template-columns:1fr}
+  .pick .card.post{display:none}
+  .hero{grid-template-columns:1fr}
+  .work-top{grid-template-columns:1fr;gap:20px}
+  .work-top .cover{max-width:200px}
+}
+@media (max-width:560px){
+  .logo small{display:none}
+  .head-right .btn:not(.primary){display:none}
+  .grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .pick .card{grid-template-columns:92px minmax(0,1fr);gap:14px;padding:12px}
+  .pick .info .t{font-size:17px}
+  .pick .info .s{display:none}
+  .rank .row{grid-template-columns:32px 40px minmax(0,1fr);gap:10px;padding:10px 12px}
+  .rank .pv{grid-column:3;text-align:left}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="fx-layer" id="fx"></div>
+<div class="push" id="push"><div class="ic">既</div><div><b>既読文庫 ・ いま</b><span id="push-text"></span></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================
+   既読文庫（架空の小説投稿サイト）— ポートフォリオ用サンプル
+   本文データの書き方（1行＝1ブロック）
+     ['n', 文章]                     地の文（描写）
+     ['s', 話者, セリフ, {noread, ghost}]  セリフ（話者が me なら右側）
+       相手のセリフの入力演出： {hesitate:回数} 迷う（…が出ては消える）
+                              {long:true} 長考（…が長く続く）
+                              {instant:true} …なしで届く
+     ['u', 話者, セリフ]              送信取消されるセリフ
+     ['sys', 文字]                   日付などのシステム表示
+     ['notice', 差出人, 文字]          通知
+     ['typing', 話者]                入力中のまま止まる表示
+     ['i', 画像名, 演出, 説明]          挿絵（演出：dark / glow / glitch）
+   挿絵画像は img/画像名.jpg に置くと自動で表示されます
+   ========================================================= */
+
+const SAMPLES = [
+{
+  id:'kidoku-2am', sample:true, theme:'horror',
+  title:'午前二時の既読', author:'夜見坂しずく', genre:'ホラー',
+  tags:['チャット形式','挿絵あり','短編','学校'],
+  c1:'#1b1d24', c2:'#6b1f1f', pv:128430, likes:9821, updated:'2026-11-08',
+  catch:'三日前から行方不明の幼なじみから、午前二時にメッセージが届いた。',
+  summary:'午前一時五十八分。眠れずにいた千尋のスマホに、三日前から連絡のつかない幼なじみ・美咲からメッセージが届く。\n「旧校舎にいる」「でも、来ないで」——噛み合わない会話。そして、千尋のアカウントから、千尋の知らないメッセージが送られはじめる。',
+  chars:{ me:{name:'千尋', color:'#5c6370'}, misaki:{name:'美咲', color:'#8e3b46'} },
+  episodes:[{ title:'第1話　窓を開けて', blocks:[
+    ['sys','10月14日（月）'],
+    ['n','午前一時五十八分。眠れずに天井を見上げていたわたしの枕元で、スマホが一度だけ震えた。'],
+    ['notice','美咲','ねえ、起きてる？'],
+    ['n','美咲。三日前の放課後から、誰とも連絡がつかなくなった幼なじみの名前だった。警察が来て、先生が来て、クラスのグループには毎日「何か知ってる人いない？」が流れていた。'],
+    ['s','me','美咲！？　いまどこにいるの'],
+    ['s','me','みんな探してるんだよ。警察にも届けてて'],
+    ['n','送信すると、すぐに「既読」がついた。三日ぶりの既読だった。'],
+    ['s','misaki','ごめんね',{long:true}],
+    ['s','misaki','旧校舎にいる'],
+    ['s','misaki','天文部の部室。覚えてる？'],
+    ['n','覚えている。中学のころ、二人で星を見るためだけに入った部だ。三年前に取り壊しが決まってから、あの木造の校舎には誰も近づかない。'],
+    ['s','me','なんでそんなところに'],
+    ['s','me','今から行く。待ってて'],
+    ['s','misaki','だめ',{hesitate:2}],
+    ['s','misaki','来ないで'],
+    ['s','misaki','ちひろは来ちゃだめ'],
+    ['n','話が合わない。呼んだのは美咲のほうなのに。'],
+    ['s','me','じゃあなんで連絡してきたの'],
+    ['s','misaki','確かめたかったの',{hesitate:1}],
+    ['s','misaki','ちひろのスマホに、ちゃんと届くかどうか'],
+    ['n','背中に、ひやりとしたものが走った。届くかどうか。その言い方は、まるで——。'],
+    ['s','misaki','あとね、ひとつだけお願い'],
+    ['s','misaki','いま、ちひろの部屋のカーテン、閉まってる？'],
+    ['n','わたしは顔を上げた。寝る前に閉めたはずのカーテンには、指一本ぶんの隙間があいていた。'],
+    ['s','me','閉まってるけど'],
+    ['s','me','なんで？'],
+    ['s','misaki','よかった'],
+    ['s','misaki','じゃあ、ぜったいに開けないで',{long:true}],
+    ['i','horror-01','dark','カーテンの隙間'],
+    ['n','隙間の向こうは、塗りつぶしたように真っ暗だった。いつもなら見えるはずの街灯の明かりが、ひとつもない。'],
+    ['s','me','美咲、ふざけてるなら本気で怒るよ',{noread:true}],
+    ['n','今度は、既読がつかなかった。'],
+    ['n','一分。二分。画面の右上で、時計の数字だけが進んでいく。'],
+    ['sys','午前2時00分'],
+    ['notice','美咲','ちひろ'],
+    ['s','misaki','ちひろ'],
+    ['s','misaki','いま送ったの、ほんとにちひろ？',{hesitate:1}],
+    ['n','指が止まった。'],
+    ['s','misaki','さっきから、ちひろのアカウントから'],
+    ['s','misaki','「窓を開けて」って、ずっと届いてるの'],
+    ['n','わたしはトークをさかのぼった。わたしが打った覚えのないメッセージが、そこに並んでいた。'],
+    ['s','me','窓を開けて',{ghost:true}],
+    ['s','me','窓を開けて',{ghost:true}],
+    ['s','me','みさき　まどを　あけて',{ghost:true}],
+    ['n','既読は、三つともついている。'],
+    ['n','そのとき、窓の外で、こつ、と小さな音がした。爪の先で、ガラスを軽く叩くような音だった。'],
+    ['n','手の中のスマホでは、美咲の名前の下で「入力中…」の表示が、いつまでも点滅を続けていた。']
+  ]}]
+},
+{
+  id:'houkago-unsend', sample:true, theme:'romance',
+  title:'放課後、送信取消', author:'春日井とおる', genre:'恋愛',
+  tags:['チャット形式','挿絵あり','短編','青春','卒業'],
+  c1:'#e8735f', c2:'#f6c08e', pv:96210, likes:12044, updated:'2026-11-06',
+  catch:'三年間、言えなかった一行は、いつも「送信取消」で消えていった。',
+  summary:'卒業式のあと、誰もいない教室。湊のスマホに、同じクラスの柚葉からメッセージが届く。\n一瞬だけ見えて、すぐに消える言葉。嘘が下手な彼女と、見なかったふりが下手な彼の、いちばん短くて長い放課後。',
+  chars:{ me:{name:'湊', color:'#7a8a9a'}, yuzu:{name:'柚葉', color:'#e8735f'} },
+  episodes:[{ title:'第1話　灰色の一行', blocks:[
+    ['sys','3月1日（土）　卒業式'],
+    ['n','式が終わって二時間がたつと、三年二組の教室には俺しか残っていなかった。黒板には、誰かがチョークで書いた「卒業おめでとう」が、少しななめに残っている。'],
+    ['notice','柚葉','まだ学校いる？'],
+    ['s','yuzu','まだ学校いる？'],
+    ['s','me','いる。教室'],
+    ['s','yuzu','そっか'],
+    ['s','yuzu','あのさ',{long:true}],
+    ['u','yuzu','ずっと言えなかったことがあって',{hesitate:2}],
+    ['n','一瞬だけ見えた文字は、すぐに灰色の一行に変わった。'],
+    ['s','me','いま何か消した？'],
+    ['s','yuzu','消してない',{hesitate:1}],
+    ['s','yuzu','誤字っただけ'],
+    ['n','嘘が下手なのは、三年間ずっと変わらない。文化祭の準備で遅くなった日も、修学旅行の夜も、柚葉は肝心なところでいつも目をそらした。'],
+    ['s','yuzu','屋上の鍵、今日だけ開いてるって知ってた？'],
+    ['s','me','知らなかった'],
+    ['s','yuzu','先生が、卒業生へのサービスだって'],
+    ['s','yuzu','来る？'],
+    ['n','返事を打つより先に、体が動いていた。階段を一段とばしで駆けあがる。最上階の重たい扉を押すと、冷たい風といっしょに、オレンジ色の光が流れこんできた。'],
+    ['i','romance-01','glow','夕焼けの屋上'],
+    ['n','フェンスにもたれて、柚葉はスマホを見ていた。まだ俺に気づいていない。名前を呼ぶかわりに、俺はメッセージを送った。'],
+    ['s','me','後ろ'],
+    ['n','振り返った柚葉は、ひどく驚いた顔をして、それからすぐにスマホで顔を隠した。'],
+    ['s','yuzu','来るの早すぎ'],
+    ['s','yuzu','まだ心の準備ができてない'],
+    ['s','me','目の前にいるのにチャットするの？'],
+    ['s','yuzu','このほうが言える気がする'],
+    ['u','yuzu','一年の春から、ずっと好きでした',{hesitate:3}],
+    ['n','灰色の一行。でも、今度は見えた。はっきりと。'],
+    ['s','me','消すの、遅いよ'],
+    ['n','柚葉の耳が、夕焼けよりも赤くなる。'],
+    ['s','yuzu','見た？',{long:true}],
+    ['s','me','見た'],
+    ['s','yuzu','忘れて'],
+    ['s','me','無理'],
+    ['n','俺はスマホをポケットにしまった。ここから先は、画面ごしじゃなくていい。'],
+    ['n','「俺も」と言った声は、風に半分さらわれた。それでも柚葉には、ちゃんと届いたらしい。'],
+    ['sys','柚葉がスタンプを送信しました'],
+    ['n','三年間でいちばん短くて、いちばん長い放課後だった。']
+  ]}]
+},
+{
+  id:'unread-132', sample:true, theme:'sf',
+  title:'未読、百三十二年', author:'星野ルカ', genre:'SF',
+  tags:['チャット形式','挿絵あり','短編','宇宙','ヒューマンドラマ'],
+  c1:'#0b1a3a', c2:'#2b6fd6', pv:74580, likes:8130, updated:'2026-11-04',
+  catch:'百三十二年前に送られたメッセージに、わたしは今日、返信した。',
+  summary:'宇宙港の地下にある「遅延郵便課」。届け先を失ったメッセージを探しなおすのが、灯の仕事だ。\nある日、古い中継衛星から一通のメッセージが見つかる。送り主は、恒星間移民船に乗った十歳の少年。送信日は、百三十二年前だった。',
+  chars:{ me:{name:'灯', color:'#4f6fa8'}, noa:{name:'ノア', color:'#2fa3c9'} },
+  episodes:[{ title:'第1話　いちばん遠い手紙', blocks:[
+    ['sys','2157年4月9日　第三宇宙港・遅延郵便課'],
+    ['n','宇宙港の地下三階には、届け先を失った手紙が眠っている。中継衛星の故障、宛先の消滅、送り主の死亡。理由はさまざまだ。灯の仕事は、それを一通ずつ開いて、もう一度届け先を探すことだった。'],
+    ['n','その日、廃棄予定の古い中継衛星の記録から、一件のメッセージが掘り起こされた。'],
+    ['notice','遅延郵便課','未読メッセージ 1件（送信日：2025年4月9日）'],
+    ['s','noa','これ、ちゃんと届いてますか',{instant:true}],
+    ['s','noa','ぼくは移民船シラサギの、ノアといいます。十歳です',{instant:true}],
+    ['s','noa','船にはおとなしかいなくて、ちょっとたいくつです',{instant:true}],
+    ['s','noa','地球のだれかに、話し相手になってほしくて',{instant:true}],
+    ['n','送信日は、ちょうど百三十二年前の今日。移民船シラサギは、出発から五年後に通信が途絶え、記録上は「消息不明」とされていた。'],
+    ['n','返事を書いても、届く相手はもういない。灯はそれを知っていた。それでも、未読のまま閉じることはできなかった。'],
+    ['s','me','届いています。返事が百三十二年遅れて、ごめんなさい',{noread:true}],
+    ['sys','中継衛星を経由して送信しています……'],
+    ['n','送信ボタンを押した指先が、少しだけ震えた。次の瞬間、端末の画面がざらりと乱れた。'],
+    ['i','sf-01','glitch','観測窓の外を横切る、白い船影'],
+    ['n','観測窓の向こうを、巨大な影がゆっくりと横切っていく。白い翼のように広がった太陽帆。船体には、かすれた文字が読めた。——SHIRASAGI。'],
+    ['n','灯が送ったメッセージの横に、小さな文字が灯った。'],
+    ['sys','既読'],
+    ['s','noa','とどいた',{long:true}],
+    ['s','noa','ほんとうに、とどいた',{hesitate:1}],
+    ['s','noa','ねむっていたら、船がかってに帰ってきちゃったみたいです'],
+    ['n','冷凍睡眠。百三十二年ぶんの眠りから、いま目を覚ましたばかりの、十歳の言葉だった。'],
+    ['s','me','おかえりなさい、ノアさん'],
+    ['s','me','いま、第三宇宙港にいます。窓から、あなたの船が見えています'],
+    ['s','noa','ぼくからも見えます'],
+    ['s','noa','手をふっている人がいる'],
+    ['n','灯は、自分が窓に向かって手をふっていることに、そのとき初めて気がついた。'],
+    ['n','その日、遅延郵便課の記録に、一件の「配達完了」が加わった。百三十二年かけて届いた、いちばん遠い手紙だった。']
+  ]}]
+}
+];
+
+/* ダミー作品（中身なし） */
+const DUMMIES = [
+  ['転生したら駅前の自販機だった','ぽんこつ缶','コメディ',['異世界','ギャグ'],51200,'2026-11-07','#7d8c63','#c9b46a'],
+  ['月曜日の幽霊部員','aoi_note','青春',['部活','友情'],42300,'2026-11-05','#5d7a8c','#a9c3cf'],
+  ['星を数える仕事','Lumi','SF',['宇宙','お仕事'],38800,'2026-11-02','#2e3a5c','#7a8cc4'],
+  ['雨宿りの探偵','しぐれ堂','ミステリ',['探偵','短編'],36450,'2026-10-30','#4b5563','#9aa5b1'],
+  ['魔王城の経理係','帳簿屋ミナト','ファンタジー',['お仕事','魔王'],61900,'2026-11-01','#5b3f6b','#b48ec2'],
+  ['百年後のきみへ','ゆき。','恋愛',['手紙','切ない'],47700,'2026-10-28','#a35d6a','#e7b6bd'],
+  ['地下鉄七号線のうわさ','7号車の住人','ホラー',['都市伝説','短編'],33100,'2026-10-25','#2b2b2b','#5e5e5e'],
+  ['竜とパン屋','こむぎ','ファンタジー',['ほのぼの','料理'],29800,'2026-10-22','#8a6a3f','#e0c48f'],
+  ['夏のおわりの通信簿','なぎ＠毎日更新','青春',['夏','友情'],25400,'2026-10-20','#2f7a8a','#9fd6dc'],
+  ['終電のあとで','真夜中ラジオ','恋愛',['大人','都会'],22600,'2026-10-18','#3a3550','#8a7fb0'],
+  ['アンドロイドは夢日記をつける','K-09','SF',['AI','ヒューマンドラマ'],31700,'2026-10-15','#3d5a5a','#8fc0b8'],
+  ['四〇四号室の住人','宵闇ノック','ホラー',['マンション','怪談'],27900,'2026-10-12','#3b2626','#7a4a4a'],
+  ['名探偵は二度寝する','すやすや探偵団','ミステリ',['コメディ','学園'],19800,'2026-10-10','#4a5d7a','#a3b6d1'],
+  ['喫茶ひだまりの午後','カナリア','ヒューマンドラマ',['日常','カフェ'],17500,'2026-10-06','#7a5a44','#d6b89a'],
+  ['引退勇者、田舎で畑をたがやす','のんびり村長','ファンタジー',['スローライフ','勇者'],55300,'2026-10-03','#4f6b3a','#a8c486']
+].map((d,i)=>({ id:'dummy-'+(i+1), dummy:true, title:d[0], author:d[1], genre:d[2], tags:d[3], pv:d[4], updated:d[5], c1:d[6], c2:d[7],
+  likes:Math.round(d[4]*0.06), catch:'（ダミーデータ）', summary:'この作品はサンプル用のダミーデータです。' }));
+
+const WORKS = [...SAMPLES, ...DUMMIES];
+const GENRES = ['ホラー','ミステリ','恋愛','青春','SF','ファンタジー','ヒューマンドラマ','コメディ'];
+
+/* ---------- 便利関数 ---------- */
+const $ = (s, r=document) => r.querySelector(s);
+const app = $('#app');
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const num = n => n.toLocaleString('ja-JP');
+const byId = id => WORKS.find(w => w.id === id);
+const textOf = x => (x[0]==='s'||x[0]==='u'||x[0]==='notice') ? x[2] : (x[0]==='n'||x[0]==='sys') ? x[1] : '';
+const chars = w => w.episodes ? w.episodes.reduce((a,e)=>a+e.blocks.reduce((b,x)=>b+textOf(x).length,0),0) : Math.round(w.pv/3.1);
+
+let settings = { fx:true, size:'m' };
+try { Object.assign(settings, JSON.parse(localStorage.getItem('kidoku-settings') || '{}')); } catch(e) {}
+const saveSettings = () => { try { localStorage.setItem('kidoku-settings', JSON.stringify(settings)); } catch(e) {} };
+
+const state = { q:'', genre:'', tag:'', sort:'pop' };
+
+function toast(msg){
+  const t = $('#toast'); t.textContent = msg; t.classList.add('on');
+  clearTimeout(toast.tm); toast.tm = setTimeout(()=>t.classList.remove('on'), 2200);
+}
+
+/* ---------- 共通パーツ ---------- */
+// 表紙画像：サンプル作品は img/cover-作品ID.jpg を置くと自動で表示（無ければ色の表紙）
+function cover(w){
+  const src = w.dummy ? '' : `img/cover-${w.id}.jpg`;
+  const imgs = src ? `<img class="bg" src="${src}" alt="" aria-hidden="true" onerror="this.remove()"><img class="fg" src="${src}" alt="${esc(w.title)} の表紙" onload="this.parentNode.classList.add('has-img')" onerror="this.remove()">` : '';
+  return `<div class="cover${w.dummy?' dummy':''}" style="--c1:${w.c1};--c2:${w.c2}">${imgs}
+    <span class="badge ${w.dummy?'dummy':'sample'}">${w.dummy?'DUMMY':'読める'}</span>
+    <div class="ct">${esc(w.title)}</div><div class="cg">${esc(w.genre)}</div></div>`;
+}
+function link(w){ return w.dummy ? `href="#" data-dummy="${w.id}"` : `href="#/work/${w.id}"`; }
+function card(w){
+  return `<a class="card" ${link(w)}>${cover(w)}
+    <div class="t">${esc(w.title)}</div><div class="a">${esc(w.author)}</div>
+    <div class="m"><span>${esc(w.genre)}</span><span>${num(w.pv)} PV</span></div></a>`;
+}
+function header(){
+  return `<header class="site-head"><div class="in">
+    <a class="logo" href="#/"><span class="mark">既</span><b>既読文庫</b><small>チャットで読む小説投稿サイト</small></a>
+    <div class="head-right"><button class="btn" data-fake>ログイン</button><button class="btn primary" data-fake>作品を投稿する</button></div>
+  </div></header>`;
+}
+function footer(){
+  return `<footer class="site-foot">※既読文庫は架空のサービスです。掲載作品はサンプル（3作品）とダミーデータです。<br>
+    制作：メイ（Mae）　<a href="../../index.html">← mae.exe に戻る</a></footer>`;
+}
+
+/* ---------- トップ ---------- */
+function renderTop(){
+  const count = g => WORKS.filter(w => w.genre === g).length;
+  const tagAll = [...new Set(WORKS.flatMap(w => w.tags))].slice(0, 18);
+  app.innerHTML = header() + `<div class="layout">
+    <aside class="side">
+      <div class="box"><h3>作品をさがす</h3>
+        <label class="search"><span aria-hidden="true">⌕</span><input id="q" type="search" placeholder="タイトル・作者・タグ" value="${esc(state.q)}"></label></div>
+      <div class="box"><h3>ジャンル</h3><ul class="genres">
+        <li><button data-genre="" class="${state.genre===''?'on':''}">すべて<span>${WORKS.length}</span></button></li>
+        ${GENRES.map(g=>`<li><button data-genre="${g}" class="${state.genre===g?'on':''}">${g}<span>${count(g)}</span></button></li>`).join('')}
+      </ul></div>
+      <div class="box"><h3>人気のタグ</h3><div class="tags">
+        ${tagAll.map(t=>`<button class="tag ${state.tag===t?'on':''}" data-tag="${esc(t)}">#${esc(t)}</button>`).join('')}
+      </div></div>
+      <div class="box sortbox"><h3>並び順</h3><div class="sort">
+        ${[['pop','人気順'],['new','新着順'],['len','文字数が多い順']].map(([v,l])=>`<label><input type="radio" name="sort" value="${v}" ${state.sort===v?'checked':''}>${l}</label>`).join('')}
+      </div></div>
+    </aside>
+    <main class="main" id="main"></main>
+  </div>` + footer();
+  renderMain();
+  const q = $('#q');
+  q.addEventListener('input', () => { state.q = q.value.trim(); renderMain(); });
+}
+
+function sorted(list){
+  const f = { pop:(a,b)=>b.pv-a.pv, new:(a,b)=>b.updated.localeCompare(a.updated), len:(a,b)=>chars(b)-chars(a) }[state.sort];
+  return [...list].sort(f);
+}
+
+function renderMain(){
+  const main = $('#main'); if (!main) return;
+  const filtering = state.q || state.genre || state.tag;
+  if (filtering){
+    const q = state.q.toLowerCase();
+    const hit = sorted(WORKS.filter(w =>
+      (!state.genre || w.genre === state.genre) &&
+      (!state.tag || w.tags.includes(state.tag)) &&
+      (!q || [w.title, w.author, w.genre, ...w.tags, w.summary].join(' ').toLowerCase().includes(q))));
+    const label = [state.genre, state.tag && '#'+state.tag, state.q && `「${state.q}」`].filter(Boolean).join(' / ');
+    main.innerHTML = `<section><div class="sec-title"><h2>検索結果：${esc(label)}</h2><small>${hit.length}件　<button class="tag" data-clear>条件をクリア</button></small></div>
+      ${hit.length ? `<div class="grid">${hit.map(card).join('')}</div>` : `<div class="empty">条件に合う作品が見つかりませんでした。</div>`}</section>`;
+    return;
+  }
+  const rank = [...WORKS].sort((a,b)=>b.pv-a.pv).slice(0,10);
+  const fresh = [...WORKS].sort((a,b)=>b.updated.localeCompare(a.updated)).slice(0,12);
+  main.innerHTML = `
+    <section class="hero">
+      <div><h1>セリフはトークで、<br>描写は文章で。</h1><p>チャットの読みやすさと、小説の描写を両方。既読文庫は、トーク画面のように読める小説投稿サイトです。</p></div>
+      <div class="demo" aria-hidden="true"><div class="d-narr">夕暮れの屋上に、風が吹いた。</div><div class="d-say">来るの早すぎ</div><div class="d-me"><small>既読</small><b>後ろ</b></div></div>
+    </section>
+    <section><div class="sec-title"><h2>編集部のおすすめ</h2><small>最後まで読めるサンプル作品</small></div>
+      <div class="pick">${SAMPLES.map(w=>`<a class="card" href="#/work/${w.id}">${cover(w)}
+        <div class="info"><span class="g">${esc(w.genre)}</span><span class="t">${esc(w.title)}</span><span class="a">${esc(w.author)}　・　${num(chars(w))}文字　・　${num(w.pv)} PV</span>
+          <p class="c">${esc(w.catch)}</p><p class="s">${esc(w.summary.replace(/\n/g,''))}</p>
+          <div class="foot">${w.tags.slice(0,3).map(t=>`<span class="tag">#${esc(t)}</span>`).join('')}<span class="go">読む →</span></div></div></a>`).join('')}
+        <button class="card post" data-fake><b>あなたの作品も、ここに。</b><small>トーク形式の小説を投稿して、編集部のおすすめを目指そう</small><span class="btn primary">作品を投稿する</span></button></div></section>
+    <section><div class="sec-title"><h2>総合ランキング</h2><small>週間 PV 順</small></div>
+      <ol class="rank">${rank.map((w,i)=>`<li><a class="row" ${link(w)}><span class="no">${i+1}</span>${cover(w)}
+        <span><span class="t">${esc(w.title)}<span class="mini ${w.dummy?'dummy':'sample'}">${w.dummy?'DUMMY':'読める'}</span></span><br><span class="a">${esc(w.author)}・${esc(w.genre)}</span></span>
+        <span class="pv">${num(w.pv)} PV</span></a></li>`).join('')}</ol></section>
+    <section><div class="sec-title"><h2>新着・更新</h2><small>${fresh.length}作品</small></div>
+      <div class="grid">${fresh.map(card).join('')}</div></section>`;
+}
+
+/* ---------- 作品ページ ---------- */
+function renderWork(w){
+  app.innerHTML = header() + `<div class="work">
+    <nav class="crumb"><a href="#/">トップ</a> ／ ${esc(w.genre)} ／ ${esc(w.title)}</nav>
+    <div class="work-top">${cover(w)}
+      <div><h1>${esc(w.title)}</h1><div class="by">作者：${esc(w.author)}</div>
+        <p class="catch">${esc(w.catch)}</p>
+        <div class="tags" style="margin-top:14px">${w.tags.map(t=>`<span class="tag">#${esc(t)}</span>`).join('')}</div>
+        <div class="stats"><span><b>${num(w.pv)}</b>PV</span><span><b>${num(w.likes)}</b>いいね</span><span><b>${num(chars(w))}</b>文字</span><span><b>${w.updated.replace(/-/g,'/')}</b>最終更新</span></div>
+        <div class="acts"><a class="btn primary" href="#/read/${w.id}/1">第1話から読む</a><button class="btn" data-fake>♡ いいね</button><button class="btn" data-fake>＋ 本棚に追加</button></div>
+      </div></div>
+    <section class="work-sec"><h2>あらすじ</h2><p>${esc(w.summary)}</p></section>
+    <section class="work-sec"><h2>目次</h2><ul class="toc">
+      ${w.episodes.map((e,i)=>`<li><a href="#/read/${w.id}/${i+1}">${esc(e.title)}<small>${w.updated.replace(/-/g,'/')}</small></a></li>`).join('')}
+      <li><span class="ng">第2話　（サンプルでは第1話まで）<small>未収録</small></span></li>
+    </ul></section>
+  </div>` + footer();
+}
+
+/* ---------- 読む画面 ---------- */
+function blockHTML(b, w){
+  const [t] = b;
+  if (t === 'n') return `<p class="blk narr" data-t="n">${esc(b[1])}</p>`;
+  if (t === 'sys') return `<div class="blk sys" data-t="sys"><span>${esc(b[1])}</span></div>`;
+  if (t === 'notice') return `<div class="blk notice" data-t="notice" data-text="${esc(b[1]+'：'+b[2])}"><div class="ic">既</div><div class="nt"><b>${esc(b[1])}</b>${esc(b[2])}</div></div>`;
+  if (t === 'i') return `<figure class="blk illust fx-${b[2]}" data-t="illust" data-fx="${b[2]}"><div class="frame">
+      <div class="ph"><span>挿絵：${esc(b[3])}<br>NO IMAGE</span></div><img src="img/${b[1]}.jpg" alt="${esc(b[3])}" onerror="this.remove()"></div>
+      <figcaption class="cap">${esc(b[3])}</figcaption></figure>`;
+  if (t === 'typing'){
+    const c = w.chars[b[1]];
+    return `<div class="blk say other typing" data-t="typing"><div class="av" style="--c:${c.color}">${esc(c.name[0])}</div>
+      <div class="col"><div class="nm">${esc(c.name)}</div><div class="bub"><span class="dots"><i></i><i></i><i></i></span></div><div class="tx">${esc(c.name)}が入力中…</div></div></div>`;
+  }
+  if (t === 's' || t === 'u'){
+    const who = b[1], text = b[2], opt = b[3] || {}, c = w.chars[who];
+    if (c && who === 'me'){
+      return `<div class="blk say me${opt.ghost?' ghost':''}" data-t="say"><div class="col"><div class="row">
+        ${opt.noread ? '' : '<span class="rd">既読</span>'}<div class="bub"><span class="txt">${esc(text)}</span></div></div></div></div>`;
+    }
+    const wa = (opt.hesitate ? ` data-hes="${opt.hesitate}"` : '') + (opt.long ? ' data-long="1"' : '') + (opt.instant ? ' data-instant="1"' : '');
+    return `<div class="blk say other${t==='u'?' unsend':''}" data-t="say" data-len="${text.length}"${wa}>
+      <div class="av" style="--c:${c.color}">${esc(c.name[0])}</div>
+      <div class="col"><div class="nm">${esc(c.name)}</div><div class="bub"><span class="dots"><i></i><i></i><i></i></span><span class="txt">${esc(text)}</span><span class="gone">メッセージの送信を取り消しました</span></div></div></div>`;
+  }
+  return '';
+}
+
+let io = null, queue = [], busy = false, timers = [];
+const wait = ms => new Promise(r => timers.push(setTimeout(r, ms)));
+
+function renderRead(w, epNo){
+  const ep = w.episodes[epNo-1] || w.episodes[0];
+  app.innerHTML = `<div class="reader theme-${w.theme} size-${settings.size}${settings.fx?' fxon':''}" id="reader">
+    <div class="r-progress" id="prog"></div>
+    <div class="r-bar"><div class="in">
+      <a class="r-back" href="#/work/${w.id}" aria-label="作品ページへ戻る">‹</a>
+      <div class="r-title">${esc(w.title)}<small>${esc(ep.title)}</small></div>
+      <button class="r-tool ${settings.fx?'on':''}" id="fxbtn" aria-pressed="${settings.fx}">演出 ${settings.fx?'ON':'OFF'}</button>
+      <button class="r-tool" id="sizebtn">文字 ${({s:'小',m:'中',l:'大'})[settings.size]}</button>
+    </div></div>
+    <article class="r-body" id="body">
+      <header class="r-head"><small>${esc(w.author)}</small><h1>${esc(ep.title)}</h1></header>
+      ${ep.blocks.map(b => blockHTML(b, w)).join('')}
+      <div class="r-end"><p>第1話　おわり</p><small>サンプルでは第1話までお読みいただけます</small>
+        <div class="acts"><a class="btn" href="#/work/${w.id}">作品ページへ</a><a class="btn" href="#/">ほかの作品をさがす</a></div></div>
+    </article></div>`;
+  $('#fxbtn').addEventListener('click', toggleFx);
+  $('#sizebtn').addEventListener('click', () => {
+    settings.size = ({s:'m', m:'l', l:'s'})[settings.size]; saveSettings();
+    const r = $('#reader'); r.classList.remove('size-s','size-m','size-l'); r.classList.add('size-'+settings.size);
+    $('#sizebtn').textContent = '文字 ' + ({s:'小',m:'中',l:'大'})[settings.size];
+  });
+  window.addEventListener('scroll', onProgress, { passive:true });
+  onProgress();
+  startReveal();
+}
+
+function onProgress(){
+  const p = $('#prog'); if (!p) return;
+  const h = document.documentElement.scrollHeight - innerHeight;
+  p.style.width = (h > 0 ? Math.min(100, scrollY / h * 100) : 100) + '%';
+}
+
+function finalize(el){
+  el.classList.add('in','typed');
+  if (el.classList.contains('unsend')) el.classList.add('unsent','static');
+}
+
+function startReveal(){
+  const blks = [...document.querySelectorAll('#body .blk:not(.in)')];
+  if (!settings.fx || !('IntersectionObserver' in window)){ blks.forEach(finalize); return; }
+  io = new IntersectionObserver(es => {
+    es.forEach(e => { if (e.isIntersecting){ io.unobserve(e.target); queue.push(e.target); } });
+    pump();
+  }, { rootMargin:'0px 0px -10% 0px', threshold:0.1 });
+  blks.forEach(b => io.observe(b));
+}
+
+function pump(){
+  if (busy || !queue.length) return;
+  busy = true;
+  const el = queue.shift();
+  reveal(el, queue.length > 3).then(() => { busy = false; pump(); });
+}
+
+async function reveal(el, fast){
+  const t = el.dataset.t;
+  if (t === 'illust'){
+    if (!fast){ await playFx(el.dataset.fx); el.classList.add('anim'); }
+    el.classList.add('in');
+    await wait(fast ? 40 : 700);
+    return;
+  }
+  if (el.dataset.instant) el.classList.add('typed');
+  el.classList.add('in');
+  if (t === 'say' && el.classList.contains('other')){
+    const h = Number(el.dataset.hes || 0), isLong = !!el.dataset.long;
+    if (el.dataset.instant){
+      if (!fast) await wait(260);
+    } else if (h || isLong){
+      // 迷う・長考は話の見せ場なので、速くスクロールしていても省かない（少し短くする）
+      const k2 = fast ? 0.6 : 1;
+      for (let k = 0; k < h; k++){
+        await wait((1000 + k * 300) * k2);
+        el.classList.add('paused');
+        await wait((1300 + k * 500) * k2);
+        el.classList.remove('paused');
+      }
+      await wait((isLong ? 2800 : 600) * k2);
+    } else if (!fast){
+      await wait(420 + Math.min(Number(el.dataset.len||0) * 22, 650));
+    }
+    el.classList.add('typed');
+    if (el.classList.contains('unsend')) wait(1500).then(() => el.classList.add('unsent'));
+    await wait(fast ? 40 : 180);
+    return;
+  }
+  if (t === 'notice' && !fast) showPush(el.dataset.text);
+  await wait(fast ? 40 : (t === 'n' ? 260 : 180));
+}
+
+async function playFx(type){
+  const fx = $('#fx');
+  fx.className = 'fx-layer'; void fx.offsetWidth; fx.className = 'fx-layer ' + type;
+  if (type === 'glitch'){ const r = $('#reader'); r && r.classList.add('shake'); wait(500).then(()=>r && r.classList.remove('shake')); }
+  await wait(type === 'dark' ? 900 : type === 'glow' ? 450 : 500);
+  wait(800).then(() => { fx.className = 'fx-layer'; });
+}
+
+function showPush(text){
+  const p = $('#push'); $('#push-text').textContent = text;
+  p.classList.add('on');
+  wait(2600).then(() => p.classList.remove('on'));
+}
+
+function toggleFx(){
+  settings.fx = !settings.fx; saveSettings();
+  const r = $('#reader'), b = $('#fxbtn');
+  r.classList.toggle('fxon', settings.fx);
+  b.classList.toggle('on', settings.fx); b.setAttribute('aria-pressed', settings.fx);
+  b.textContent = '演出 ' + (settings.fx ? 'ON' : 'OFF');
+  if (!settings.fx){ stopReveal(); document.querySelectorAll('#body .blk').forEach(finalize); }
+  else { startReveal(); }
+}
+
+function stopReveal(){
+  if (io){ io.disconnect(); io = null; }
+  queue = []; busy = false; timers.forEach(clearTimeout); timers = [];
+  const fx = $('#fx'); if (fx) fx.className = 'fx-layer';
+  const p = $('#push'); if (p) p.classList.remove('on');
+}
+
+/* ---------- ダミー作品 ---------- */
+function showDummy(w){
+  const m = document.createElement('div');
+  m.className = 'modal';
+  m.innerHTML = `<div class="panel" role="dialog" aria-modal="true"><h3>「${esc(w.title)}」はダミー作品です</h3>
+    <p>この作品は一覧を見せるためのダミーデータで、本文はありません。最後まで読めるのは、次の3作品です。</p>
+    <ul>${SAMPLES.map(s=>`<li><a href="#/work/${s.id}">${esc(s.title)}　<small style="font-weight:400;color:var(--sub)">${esc(s.genre)}</small></a></li>`).join('')}</ul>
+    <button class="btn" data-close>閉じる</button></div>`;
+  document.body.appendChild(m);
+  m.addEventListener('click', e => { if (e.target === m || e.target.closest('[data-close]') || e.target.closest('a')) m.remove(); });
+}
+
+/* ---------- クリック操作のまとめ ---------- */
+document.addEventListener('click', e => {
+  const d = e.target.closest('[data-dummy]');
+  if (d){ e.preventDefault(); showDummy(byId(d.dataset.dummy)); return; }
+  if (e.target.closest('[data-fake]')){ toast('サンプルのため、この機能は動きません'); return; }
+  const g = e.target.closest('[data-genre]');
+  if (g){ state.genre = g.dataset.genre; renderTop(); return; }
+  const t = e.target.closest('[data-tag]');
+  if (t){ state.tag = state.tag === t.dataset.tag ? '' : t.dataset.tag; renderTop(); return; }
+  if (e.target.closest('[data-clear]')){ Object.assign(state, { q:'', genre:'', tag:'' }); renderTop(); return; }
+});
+document.addEventListener('change', e => {
+  if (e.target.name === 'sort'){ state.sort = e.target.value; renderMain(); }
+});
+
+/* ---------- 画面の切り替え ---------- */
+function route(){
+  stopReveal();
+  window.removeEventListener('scroll', onProgress);
+  const [page, id, ep] = location.hash.replace(/^#\/?/, '').split('/');
+  const w = byId(id);
+  if (page === 'work' && w && !w.dummy) renderWork(w);
+  else if (page === 'read' && w && !w.dummy) renderRead(w, Number(ep) || 1);
+  else renderTop();
+  window.scrollTo(0, 0);
+}
+window.addEventListener('hashchange', route);
+route();
+</script>
+</body>
+</html>
