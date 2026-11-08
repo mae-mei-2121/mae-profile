@@ -71,7 +71,8 @@ section.cat{padding:72px 0;border-bottom:1px solid var(--line)}
 .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:32px 24px}
 .card{display:block;position:relative}
 .thumb{position:relative;aspect-ratio:16/9;overflow:hidden;border:1px solid var(--line-2);background:#0b0d17;transition:border-color .25s,box-shadow .25s}
-.thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1}
+/* 縦横比が合わないときは横幅いっぱいにして、下側をカット */
+.thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;z-index:1}
 /* 画像なしのときの仮枠 */
 .thumb .ph{position:absolute;inset:0;display:grid;place-items:center;
   background:
