@@ -29,8 +29,10 @@
 | No. | Title | 概要 | Status |
 |:---:|:---|:---|:---:|
 | **WEB 01** | [**既読文庫**](https://mae-mei-2121.github.io/mae-profile/web/01/index.html) | トーク画面のように読める、架空の小説投稿サイト | ![](assets/badges/status-released.svg) |
-| WEB 02–06 | — | Webサイト・ランディングページ | ![](assets/badges/status-wip.svg) |
-| GAME 01–03 | — | ブラウザゲーム | ![](assets/badges/status-wip.svg) |
+| **WEB 02** | [**深淵ツーリズム**](https://mae-mei-2121.github.io/mae-profile/web/02/index.html) | スクロールで深海へ潜っていく、架空の深海ツアー会社のLP | ![](assets/badges/status-released.svg) |
+| WEB 03–06 | — | Webサイト・ランディングページ | ![](assets/badges/status-wip.svg) |
+| **GAME 01** | [**まばたき**](https://mae-mei-2121.github.io/mae-profile/game/01/index.html) | 目を閉じて歩き、目を開けて確かめる3Dホラー（デモ版） | ![](assets/badges/status-released.svg) |
+| GAME 02–03 | — | ブラウザゲーム | ![](assets/badges/status-wip.svg) |
 | 3DCG 01–03 | — | 3Dモデル（Three.js） | ![](assets/badges/status-wip.svg) |
 | TOOL 01–03 | — | ツール | ![](assets/badges/status-soon.svg) |
 
@@ -52,10 +54,16 @@ mae-profile/
 ├── index.html            # トップ（Works 一覧）
 ├── assets/               # ロゴ・READMEのバナー・バッジ
 ├── thumbs/               # 作品のサムネイル（16:9）
-└── web/
-    └── 01/               # 既読文庫
+├── web/
+│   ├── 01/               # 既読文庫
+│   │   ├── index.html
+│   │   └── img/          # ロゴ・表紙・挿絵
+│   └── 02/               # 深淵ツーリズム
+│       └── index.html    # 画像なし（海も生物もコードで描画）
+└── game/
+    └── 01/               # まばたき
         ├── index.html
-        └── img/          # ロゴ・表紙・挿絵
+        └── img/          # 質感・お守り・罠の画像
 ```
 
 ---
@@ -63,6 +71,7 @@ mae-profile/
 ## Run Locally
 
 ビルドは不要です。リポジトリを取得して、`index.html` をブラウザで開くだけで動きます。
+（GAME 01 は画像を読み込むため、ファイルを直接開くと質感が表示されません。簡単なローカルサーバー経由で開いてください。）
 
 ```bash
 git clone https://github.com/mae-mei-2121/mae-profile.git

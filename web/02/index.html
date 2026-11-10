@@ -1,0 +1,1720 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>深淵ツーリズム — 駿河湾・有人潜水艇の深海ツアー</title>
+<meta name="description" content="光が届かない場所へ、ご案内します。駿河湾発、有人潜水艇で行く深海ツアー。（架空の企業のサンプルサイトです）">
+<meta name="robots" content="noindex, nofollow, noarchive, noimageindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=IBM+Plex+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#e6f1f0;
+    --ink-dim:rgba(230,241,240,.62);
+    --ink-faint:rgba(230,241,240,.28);
+    --abyss:#020a12;
+    --glow:#9ff3e6;
+    --serif-ja:"Shippori Mincho", "Yu Mincho", serif;
+    --serif-en:"Cormorant Garamond", Georgia, serif;
+    --mono:"IBM Plex Mono", ui-monospace, monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{background:var(--abyss)}
+  body{
+    background:var(--abyss);color:var(--ink);
+    font-family:var(--serif-ja);
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  a{color:inherit;text-decoration:none}
+
+  /* 海（3D）はページ全体の背景に固定。スクロール量＝潜った深さ */
+  #sea{position:fixed;inset:0;width:100%;height:100%;display:block;z-index:0;opacity:0;transition:opacity 1.6s ease}
+  #sea.is-ready{opacity:1}
+  main,.ft{position:relative;z-index:1}
+
+  /* ---------- 0m：水面 ---------- */
+  .fv{
+    position:relative;height:100vh;height:100svh;min-height:560px;
+    overflow:hidden;
+    /* WebGLが読み込まれる前／使えない環境でも成立する背景 */
+    background:
+      radial-gradient(120% 60% at 55% -10%, rgba(120,220,215,.55), transparent 60%),
+      linear-gradient(180deg,#2c8c97 0%,#0d4a5c 38%,#062636 70%,#020a12 100%);
+  }
+  .gl .fv{background:transparent}
+  .fv::before{ /* 上端：ロゴが光に負けないよう少しだけ落とす */
+    content:"";position:absolute;z-index:1;left:0;right:0;top:0;height:140px;
+    background:linear-gradient(180deg,rgba(6,60,72,.18),transparent);pointer-events:none;
+  }
+
+  .hd{
+    position:absolute;z-index:3;top:0;left:0;right:0;
+    display:flex;justify-content:space-between;align-items:flex-start;
+    padding:28px clamp(20px,4vw,56px);
+    text-shadow:0 1px 14px rgba(2,30,40,.55);
+  }
+  .logo{display:flex;flex-direction:column;gap:6px}
+  .logo__ja{font-size:17px;font-weight:600;letter-spacing:.32em}
+  .logo__en{font-family:var(--serif-en);font-size:12px;letter-spacing:.42em;color:var(--ink-dim)}
+  .reserve{
+    font-size:13px;letter-spacing:.24em;
+    padding:12px 22px;border:1px solid var(--ink-faint);
+    transition:border-color .4s, background .4s;
+  }
+  .reserve:hover{border-color:var(--ink);background:rgba(230,241,240,.08)}
+
+  .copy{
+    position:absolute;z-index:2;
+    left:clamp(20px,8vw,140px);top:50%;transform:translateY(-46%);
+  }
+  .copy__lead{
+    font-family:var(--serif-en);font-style:italic;font-weight:300;
+    font-size:clamp(14px,1.3vw,17px);letter-spacing:.2em;color:var(--ink-dim);
+    margin-bottom:28px;
+  }
+  .copy h1{
+    font-weight:400;
+    font-size:clamp(34px,5.6vw,84px);
+    line-height:1.42;letter-spacing:.08em;
+    text-shadow:0 2px 30px rgba(2,20,30,.35);
+  }
+  .copy h1 .ln{display:block;white-space:nowrap}
+  .copy h1 .ch{display:inline-block;opacity:0;transform:translateY(.35em);filter:blur(6px);
+    animation:surface 1.8s cubic-bezier(.2,.7,.2,1) forwards}
+  @keyframes surface{to{opacity:1;transform:none;filter:none}}
+  .copy__sub{
+    margin-top:36px;font-size:clamp(13px,1.1vw,15px);line-height:2.1;letter-spacing:.14em;color:var(--ink-dim);
+    opacity:0;animation:fade 1.6s ease 2.4s forwards;
+  }
+  @keyframes fade{to{opacity:1}}
+
+  /* 水深メーター（スクロールで増えていく） */
+  .depth{
+    position:fixed;z-index:5;right:clamp(16px,3vw,44px);top:50%;transform:translateY(-50%);
+    display:flex;align-items:center;gap:14px;
+    font-family:var(--mono);color:var(--ink-dim);pointer-events:none;
+  }
+  .depth__read{text-align:right}
+  .depth__label{font-size:10px;letter-spacing:.3em}
+  .depth__num{font-size:22px;font-weight:300;color:var(--ink);letter-spacing:.06em;font-variant-numeric:tabular-nums}
+  .depth__num small{font-size:11px;margin-left:4px;color:var(--ink-dim)}
+  .depth__zone{margin-top:4px;font-family:var(--serif-ja);font-size:11px;letter-spacing:.3em;color:var(--ink-dim)}
+  .depth__bar{position:relative;width:1px;height:180px;background:var(--ink-faint)}
+  .depth__bar::before,.depth__bar::after{content:"";position:absolute;left:-4px;width:9px;height:1px;background:var(--ink-faint)}
+  .depth__bar::before{top:0}.depth__bar::after{bottom:0}
+  .depth__dot{position:absolute;left:-3px;top:0;width:7px;height:7px;border-radius:50%;background:var(--glow);
+    box-shadow:0 0 10px var(--glow)}
+
+  .meta{
+    position:absolute;z-index:2;left:clamp(20px,4vw,56px);bottom:30px;
+    font-family:var(--mono);font-size:11px;letter-spacing:.14em;line-height:1.9;color:var(--ink-dim);
+  }
+  .cue{
+    position:absolute;z-index:2;left:50%;bottom:26px;transform:translateX(-50%);
+    display:flex;flex-direction:column;align-items:center;gap:10px;
+    font-size:12px;letter-spacing:.5em;color:var(--ink-dim);
+  }
+  .cue__en{font-family:var(--serif-en);font-size:11px;letter-spacing:.3em}
+  .cue__line{position:relative;width:1px;height:56px;background:var(--ink-faint);overflow:hidden}
+  .cue__line::after{content:"";position:absolute;left:0;top:-40%;width:1px;height:40%;background:var(--ink);
+    animation:sink 2.4s cubic-bezier(.6,0,.4,1) infinite}
+  @keyframes sink{to{top:100%}}
+
+  /* ---------- 深さの層 ---------- */
+  .zone{position:relative;min-height:220vh}
+  .zone--abyss{min-height:200vh}
+  .zone__label{
+    position:absolute;top:18vh;left:clamp(20px,8vw,140px);
+    opacity:0;transform:translateY(24px);transition:opacity 1.4s ease, transform 1.4s cubic-bezier(.2,.7,.2,1);
+  }
+  .zone__label.is-in{opacity:1;transform:none}
+  .zone__depth{font-family:var(--serif-en);font-weight:300;font-size:clamp(56px,9vw,128px);line-height:1;letter-spacing:.02em}
+  .zone__depth span{font-size:.32em;margin-left:.2em;color:var(--ink-dim)}
+  .zone__name{margin-top:18px;font-size:clamp(20px,2vw,26px);letter-spacing:.5em}
+  .zone__en{margin-top:10px;font-family:var(--serif-en);font-style:italic;font-size:14px;letter-spacing:.2em;color:var(--ink-dim)}
+  .zone--abyss{min-height:270vh}
+
+  /* ---------- 本文 ---------- */
+  .zone__body{
+    position:absolute;left:clamp(20px,8vw,140px);max-width:min(560px,calc(100vw - 40px));
+    padding:28px 32px 32px 0;
+  }
+  .zone__body--wide{max-width:min(860px,calc(100vw - 40px))}
+  .zone__body,.trench__msg{isolation:isolate}
+  /* 生物が後ろを通っても文字が読めるよう、文字の後ろだけをうっすら暗くする */
+  .zone__body::before,.trench__msg::before{
+    content:"";position:absolute;inset:-12% -18% -12% -30%;z-index:-1;pointer-events:none;
+    background:radial-gradient(closest-side,rgba(2,8,14,.62),rgba(2,8,14,0));
+  }
+  .reveal{opacity:0;transform:translateY(28px);transition:opacity 1.4s ease, transform 1.4s cubic-bezier(.2,.7,.2,1)}
+  .reveal.is-in{opacity:1;transform:none}
+  .kicker{font-family:var(--serif-en);font-style:italic;font-size:13px;letter-spacing:.24em;color:var(--glow);opacity:.75;margin-bottom:14px}
+  .zone__head{font-weight:400;font-size:clamp(26px,3.2vw,44px);line-height:1.55;letter-spacing:.08em;text-shadow:0 2px 24px rgba(0,0,0,.5)}
+  .zone__text{margin-top:26px;font-size:clamp(14px,1.1vw,15px);line-height:2.3;letter-spacing:.1em;color:var(--ink-dim)}
+  .zone__text + .zone__text{margin-top:18px}
+
+  /* 潜水艇の数字 */
+  .sub{margin-top:52px;padding-top:26px;border-top:1px solid var(--ink-faint)}
+  .sub__title{font-size:16px;letter-spacing:.18em}
+  .sub__title span{display:block;margin-top:6px;font-family:var(--serif-en);font-style:italic;font-size:12px;letter-spacing:.2em;color:var(--ink-dim)}
+  .spec,.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:26px 40px;margin-top:26px}
+  .stats{grid-template-columns:repeat(4,minmax(0,1fr));margin-top:44px;padding-top:26px;border-top:1px solid var(--ink-faint)}
+  .spec dt,.stats dt{font-size:11px;letter-spacing:.24em;color:var(--ink-dim)}
+  .spec dd,.stats dd{margin-top:8px;font-family:var(--mono);font-weight:300;font-size:clamp(24px,2.4vw,32px);letter-spacing:.02em;font-variant-numeric:tabular-nums}
+  .spec dd small,.stats dd small{font-family:var(--serif-ja);font-size:12px;margin-left:4px;color:var(--ink-dim)}
+  .spec .spec__note{margin-top:4px;font-family:var(--serif-ja);font-size:11px;letter-spacing:.1em;color:var(--ink-dim)}
+
+  /* ツアープラン：カードではなく、細い線で区切った表 */
+  .plans{list-style:none;margin-top:38px;border-top:1px solid var(--ink-faint)}
+  .plan{display:grid;grid-template-columns:9em 13em 1fr;grid-template-areas:"name meta price" "name note note";
+    gap:6px 28px;align-items:baseline;padding:24px 0;border-bottom:1px solid var(--ink-faint)}
+  .plan__name{grid-area:name;font-size:18px;letter-spacing:.16em}
+  .plan__meta{grid-area:meta;font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--ink-dim)}
+  .plan__price{grid-area:price;justify-self:end;font-family:var(--mono);font-weight:300;font-size:clamp(22px,2.2vw,28px);font-variant-numeric:tabular-nums}
+  .plan__price small{font-family:var(--serif-ja);font-size:12px;margin-left:4px;color:var(--ink-dim)}
+  .plan__note{grid-area:note;font-size:13px;line-height:1.9;letter-spacing:.08em;color:var(--ink-dim)}
+  .plans__foot{margin-top:14px;font-size:11px;letter-spacing:.12em;color:var(--ink-faint);text-align:right}
+
+  .trench__msg{position:relative;text-align:center;margin:-4vh 0 6vh}
+  .trench__msg .zone__text{margin-top:16px}
+
+  /* ---------- 6000m：チョウチンアンコウと予約ボタン ---------- */
+  .trench{position:relative;min-height:150vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20vh 20px 10vh}
+  .trench .zone__label{position:static;text-align:center;margin-bottom:8vh}
+  .angler{position:relative;width:min(640px,92vw);aspect-ratio:600/420}
+  .angler svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+  .lure{
+    position:absolute;left:25%;top:14.8%;
+    display:flex;align-items:center;gap:18px;
+    transform:translate(-9px,-9px);
+    background:none;border:0;padding:0;color:inherit;font:inherit;cursor:pointer;text-align:left;
+  }
+  .lure:focus-visible{outline:1px solid var(--glow);outline-offset:8px}
+  .lure__light{
+    flex:none;width:18px;height:18px;border-radius:50%;background:#d6fff7;
+    box-shadow:0 0 18px 6px rgba(159,243,230,.75),0 0 90px 26px rgba(159,243,230,.22);
+    animation:lure 3.2s ease-in-out infinite;
+  }
+  @keyframes lure{50%{box-shadow:0 0 26px 9px rgba(159,243,230,.9),0 0 120px 40px rgba(159,243,230,.3)}}
+  .lure__txt{
+    white-space:nowrap;font-size:15px;letter-spacing:.24em;
+    padding:12px 0 12px 18px;border-left:1px solid var(--ink-faint);
+    transition:color .4s, letter-spacing .6s;
+  }
+  .lure__txt small{display:block;margin-top:6px;font-family:var(--serif-en);font-style:italic;font-size:12px;letter-spacing:.2em;color:var(--ink-dim)}
+  .lure:hover .lure__txt{color:#fff;letter-spacing:.3em}
+  /* 3Dが動く環境：SVGの絵は隠し、ボタンは3Dの提灯の位置に重ねる */
+  .gl .angler svg{display:none}
+  .gl .lure{position:fixed;left:0;top:0;z-index:4;opacity:0;pointer-events:none;transition:opacity .8s}
+  .gl .lure.is-on{opacity:1;pointer-events:auto}
+  /* 提灯の竿と文字が重ならないよう、文字は光の左側に置く */
+  .gl .lure{flex-direction:row-reverse}
+  .gl .lure__txt{text-align:right;padding:12px 18px 12px 0;border-left:0;border-right:1px solid var(--ink-faint)}
+  .lure:hover .lure__light{background:#fff}
+
+  .ft{padding:40px 20px;text-align:center;font-size:11px;line-height:2;letter-spacing:.08em;color:var(--ink-faint)}
+
+  /* ---------- 予約フォーム（ポップアップ） ---------- */
+  .book{
+    margin:auto;width:min(560px,calc(100vw - 32px));max-height:calc(100vh - 32px);max-height:calc(100svh - 32px);
+    padding:0;border:1px solid rgba(159,243,230,.22);color:var(--ink);
+    background:linear-gradient(180deg,rgba(8,26,34,.97),rgba(3,11,17,.98));
+    box-shadow:0 0 0 1px rgba(0,0,0,.4),0 30px 120px rgba(0,0,0,.6),0 0 80px rgba(159,243,230,.06);
+    overflow:auto;
+    color-scheme:dark;scrollbar-width:thin;scrollbar-color:rgba(159,243,230,.25) transparent;   /* スクロールバーも暗い色に */
+  }
+  .book::-webkit-scrollbar{width:6px}
+  .book::-webkit-scrollbar-thumb{background:rgba(159,243,230,.25)}
+  .book::backdrop{background:rgba(1,5,10,.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+  .book[open]{animation:bookIn .6s cubic-bezier(.2,.7,.2,1)}
+  .book[open]::backdrop{animation:fade .6s ease}
+  @keyframes bookIn{from{opacity:0;transform:translateY(24px) scale(.98)}}
+  .book__form,.book__done{position:relative;padding:44px clamp(22px,5vw,48px) 40px}
+  .book__close{position:absolute;top:14px;right:14px;width:40px;height:40px;background:none;border:0;color:var(--ink-dim);font-size:24px;line-height:1;cursor:pointer}
+  .book__close:hover{color:var(--ink)}
+  .book__title{font-weight:400;font-size:clamp(22px,2.6vw,28px);letter-spacing:.14em}
+  .book__notice{margin-top:12px;font-size:11px;line-height:1.9;letter-spacing:.06em;color:var(--ink-dim)}
+  .book__courses{border:0;margin-top:28px;display:grid;gap:8px}
+  .book__courses legend,.field > span{font-size:11px;letter-spacing:.24em;color:var(--ink-dim);margin-bottom:10px}
+  .book__courses label{display:block;cursor:pointer}
+  .book__courses input{position:absolute;opacity:0;pointer-events:none}
+  .book__courses label > span{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:14px 16px;border:1px solid var(--ink-faint);transition:border-color .3s, background .3s}
+  .book__courses b{font-weight:400;font-size:15px;letter-spacing:.14em}
+  .book__courses i{font-style:normal;font-family:var(--mono);font-size:12px;color:var(--ink-dim)}
+  .book__courses input:checked + span{border-color:var(--glow);background:rgba(159,243,230,.07);box-shadow:inset 3px 0 0 var(--glow)}
+  .book__courses input:focus-visible + span{outline:1px solid var(--glow);outline-offset:3px}
+  .book__row{display:grid;grid-template-columns:1fr 8em;gap:16px}
+  .field{display:flex;flex-direction:column;margin-top:22px}
+  .field input,.field select,.field textarea{
+    font:inherit;font-size:15px;color:var(--ink);background:rgba(230,241,240,.04);
+    border:0;border-bottom:1px solid var(--ink-faint);padding:10px 2px;outline:none;transition:border-color .3s, background .3s;
+    color-scheme:dark;
+  }
+  .field textarea{resize:vertical;border:1px solid var(--ink-faint);padding:10px 12px}
+  .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--glow);background:rgba(159,243,230,.06)}
+  .field input::placeholder,.field textarea::placeholder{color:rgba(230,241,240,.25)}
+  .field.is-bad input{border-color:#ff8f8f}
+  .book__error{min-height:1.6em;margin-top:16px;font-size:12px;letter-spacing:.06em;color:#ffb0b0}
+  .book__submit{
+    margin-top:8px;width:100%;padding:16px;cursor:pointer;
+    font:inherit;font-size:15px;letter-spacing:.3em;color:#02121a;
+    background:#cffff5;border:0;box-shadow:0 0 30px rgba(159,243,230,.35);transition:background .3s, box-shadow .3s;
+  }
+  .book__submit:hover{background:#fff;box-shadow:0 0 44px rgba(159,243,230,.55)}
+  .book__done{text-align:center;padding-top:56px}
+  .book__doneLight{display:block;width:16px;height:16px;margin:0 auto 26px;border-radius:50%;background:#d6fff7;box-shadow:0 0 18px 6px rgba(159,243,230,.7),0 0 70px 20px rgba(159,243,230,.2)}
+  .book__doneText{margin-top:20px;font-size:14px;line-height:2.1;letter-spacing:.08em;color:var(--ink-dim)}
+  .book__done .book__submit{margin-top:28px}
+  html.is-locked{overflow:hidden}
+
+  @media (max-width:720px){
+    .copy{top:44%;right:20px}
+    .copy h1{font-size:8vw;letter-spacing:.06em}
+    .copy__lead{margin-bottom:18px}
+    .copy__sub{margin-top:24px}
+    .depth{top:auto;bottom:28px;transform:none}
+    .depth__bar{height:110px}
+    .depth__num{font-size:17px}
+    .meta{display:none}
+    .reserve{padding:10px 14px;font-size:12px;letter-spacing:.14em}
+    .lure__txt{font-size:13px;letter-spacing:.14em}
+    .pc{display:none}
+    .zone__body{padding-right:0}
+    .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .plan{grid-template-columns:1fr auto;grid-template-areas:"name price" "meta meta" "note note";gap:6px 16px}
+    .book__row{grid-template-columns:1fr 6.5em}
+    .book__courses label > span{flex-direction:column;gap:4px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .copy h1 .ch,.copy__sub{animation:none;opacity:1;transform:none;filter:none}
+    .cue__line::after{animation:none;top:30%}
+    .zone__label,.reveal{transition:none}
+    .book[open],.book[open]::backdrop{animation:none}
+    .lure__light{animation:none}
+  }
+</style>
+</head>
+<body>
+
+<canvas id="sea" aria-hidden="true"></canvas>
+
+<main>
+  <section class="fv" id="surface">
+    <header class="hd">
+      <a class="logo" href="#surface" aria-label="深淵ツーリズム">
+        <span class="logo__ja">深淵ツーリズム</span>
+        <span class="logo__en">SHINEN TOURISM</span>
+      </a>
+      <a class="reserve" href="#reserve">ツアーを予約する</a>
+    </header>
+
+    <div class="copy">
+      <p class="copy__lead">Deep-sea tours from Suruga Bay</p>
+      <h1 id="catch"><span class="ln">光が届かない場所へ、</span><span class="ln">ご案内します。</span></h1>
+      <p class="copy__sub">駿河湾発、有人潜水艇で行く深海ツアー。<br>水深200mから6000mまで。</p>
+    </div>
+
+    <p class="meta">N 34°52′ / E 138°40′<br>SURUGA BAY — 水温 18.4℃</p>
+
+    <div class="cue" aria-hidden="true">
+      <span>潜る</span>
+      <span class="cue__line"></span>
+      <span class="cue__en">SCROLL TO DIVE</span>
+    </div>
+  </section>
+
+  <section class="zone" id="twilight" data-depth="200">
+    <div class="zone__label">
+      <p class="zone__depth">200<span>m</span></p>
+      <p class="zone__name">薄明</p>
+      <p class="zone__en">Twilight zone</p>
+    </div>
+    <div class="zone__body reveal" style="top:62vh">
+      <p class="kicker">About us</p>
+      <h2 class="zone__head">地図のない場所を、旅先に。</h2>
+      <p class="zone__text">駿河湾は、日本でいちばん深い湾です。<br>岸を離れて少し沖へ出るだけで、海は急に深くなり、<br class="pc">光の届かない世界が始まります。</p>
+      <p class="zone__text">深淵ツーリズムは、その入口まで、<br class="pc">あなたをお連れする会社です。<br>これまで研究者だけが見てきた景色を、旅のひとつに。</p>
+    </div>
+  </section>
+
+  <section class="zone" id="midnight" data-depth="1000">
+    <div class="zone__label">
+      <p class="zone__depth">1000<span>m</span></p>
+      <p class="zone__name">真夜中</p>
+      <p class="zone__en">Midnight zone</p>
+    </div>
+    <div class="zone__body reveal" style="top:62vh">
+      <p class="kicker">Experience</p>
+      <h2 class="zone__head">窓の外で、生きものが光る。</h2>
+      <p class="zone__text">水深1000mを超えると、太陽の光はまったく届かなくなります。<br>けれど、闇は空っぽではありません。</p>
+      <p class="zone__text">ライトを消すと、窓の外で小さな光がまたたき、流れ、消えていく。<br>そのほとんどが、生きものが自ら放つ光です。</p>
+      <div class="sub">
+        <p class="sub__title">有人潜水艇「しずく」<span>Submersible SHIZUKU</span></p>
+        <dl class="spec">
+          <div><dt>定員</dt><dd>3<small>名</small></dd><dd class="spec__note">パイロット1名＋お客さま2名</dd></div>
+          <div><dt>最大潜航深度</dt><dd>6,200<small>m</small></dd></div>
+          <div><dt>前方の観察窓</dt><dd>3<small>面</small></dd></div>
+          <div><dt>1回の潜航</dt><dd>約6<small>時間</small></dd></div>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <section class="zone zone--abyss" id="abyss" data-depth="3000">
+    <div class="zone__label">
+      <p class="zone__depth">3000<span>m</span></p>
+      <p class="zone__name">深淵</p>
+      <p class="zone__en">Abyssal zone</p>
+    </div>
+    <div class="zone__body zone__body--wide reveal" style="top:58vh">
+      <p class="kicker">Tour plans</p>
+      <h2 class="zone__head">深さで選ぶ、3つの旅。</h2>
+      <ul class="plans">
+        <li class="plan">
+          <p class="plan__name">薄明コース</p>
+          <p class="plan__meta">水深200m／約3時間</p>
+          <p class="plan__price">98,000<small>円</small></p>
+          <p class="plan__note">光が消えていく境目を、ゆっくり見届ける。はじめての方に。</p>
+        </li>
+        <li class="plan">
+          <p class="plan__name">真夜中コース</p>
+          <p class="plan__meta">水深1,000m／約6時間</p>
+          <p class="plan__price">380,000<small>円</small></p>
+          <p class="plan__note">完全な闇と、生きものの光。いちばん人気のコース。</p>
+        </li>
+        <li class="plan">
+          <p class="plan__name">深淵 特別便</p>
+          <p class="plan__meta">水深6,000m／母船で3泊4日</p>
+          <p class="plan__price">4,800,000<small>円</small></p>
+          <p class="plan__note">伊豆・小笠原海溝へ。年に4回、各回2名だけの旅。</p>
+        </li>
+      </ul>
+      <p class="plans__foot">料金はお一人さまあたり（税込）</p>
+    </div>
+    <div class="zone__body reveal" style="top:168vh">
+      <p class="kicker">Safety</p>
+      <h2 class="zone__head">深く潜るほど、慎重に。</h2>
+      <p class="zone__text">潜水艇は毎回、312項目の点検を終えてから海へ出ます。<br>パイロットは全員、潜航経験10年以上。</p>
+      <p class="zone__text">万一のときも、72時間分の酸素と、<br class="pc">自動で浮き上がる仕組みが、あなたを海面へ戻します。</p>
+      <dl class="stats">
+        <div><dt>潜航実績</dt><dd>1,284<small>回</small></dd></div>
+        <div><dt>重大事故</dt><dd>0<small>件</small></dd></div>
+        <div><dt>点検項目</dt><dd>312</dd></div>
+        <div><dt>パイロット経験</dt><dd>10<small>年以上</small></dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <section class="trench" id="reserve" data-depth="6000">
+    <div class="zone__label">
+      <p class="zone__depth">6000<span>m</span></p>
+      <p class="zone__name">海溝の入口</p>
+      <p class="zone__en">Izu-Ogasawara Trench — 特別便のみ</p>
+    </div>
+    <div class="trench__msg reveal">
+      <h2 class="zone__head">ここが、旅の入口です。</h2>
+      <p class="zone__text">光の先で、ご予約を承っています。</p>
+    </div>
+
+    <div class="angler">
+      <!-- チョウチンアンコウ：体はほとんど見えず、提灯の光＝予約ボタン -->
+      <svg viewBox="0 0 600 420" aria-hidden="true">
+        <defs>
+          <radialGradient id="aBody" cx="30%" cy="35%" r="75%">
+            <stop offset="0" stop-color="#16303a"/>
+            <stop offset=".55" stop-color="#08151b"/>
+            <stop offset="1" stop-color="#030a0e" stop-opacity="0"/>
+          </radialGradient>
+          <radialGradient id="aGlow" cx="150" cy="62" r="230" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="#9ff3e6" stop-opacity=".22"/>
+            <stop offset="1" stop-color="#9ff3e6" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+        <circle cx="150" cy="62" r="230" fill="url(#aGlow)"/>
+        <path d="M150,252 C178,168 300,138 402,158 C482,174 540,220 560,258 L604,212 L594,300 L560,288 C530,332 430,372 330,366 C240,360 172,332 152,300 C182,298 214,292 238,280 C210,276 176,268 150,252 Z"
+              fill="url(#aBody)" stroke="rgba(159,243,230,.10)" stroke-width="1.2"/>
+        <path d="M160,262 l6,13 l6,-12 l6,14 l6,-13 l6,14 l6,-12 l6,12" fill="none" stroke="rgba(214,255,247,.28)" stroke-width="1.2"/>
+        <path d="M162,296 l6,-12 l6,11 l6,-13 l6,12 l6,-12 l6,11" fill="none" stroke="rgba(214,255,247,.2)" stroke-width="1.2"/>
+        <circle cx="222" cy="214" r="6" fill="#0c1f25" stroke="rgba(159,243,230,.3)"/>
+        <path d="M238,170 C224,104 194,72 150,62" fill="none" stroke="rgba(159,243,230,.24)" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <button class="lure" type="button" aria-haspopup="dialog" aria-controls="book">
+        <span class="lure__light" aria-hidden="true"></span>
+        <span class="lure__txt">ツアーを予約する<small>Follow the light</small></span>
+      </button>
+    </div>
+  </section>
+</main>
+
+<!-- 予約フォーム（ダミー）：入力内容はどこにも送信しない -->
+<dialog class="book" id="book" aria-labelledby="bookTitle">
+  <form class="book__form" id="bookForm" novalidate>
+    <button class="book__close" type="button" data-close aria-label="閉じる">×</button>
+    <p class="kicker">Reservation</p>
+    <h2 class="book__title" id="bookTitle">ご予約</h2>
+    <p class="book__notice">これは架空の企業のサンプルです。入力した内容はどこにも送信されません。</p>
+
+    <fieldset class="book__courses">
+      <legend>コース</legend>
+      <label><input type="radio" name="course" value="薄明コース" checked><span><b>薄明コース</b><i>水深200m／98,000円</i></span></label>
+      <label><input type="radio" name="course" value="真夜中コース"><span><b>真夜中コース</b><i>水深1,000m／380,000円</i></span></label>
+      <label><input type="radio" name="course" value="深淵 特別便"><span><b>深淵 特別便</b><i>水深6,000m／4,800,000円</i></span></label>
+    </fieldset>
+
+    <div class="book__row">
+      <label class="field"><span>ご希望の日</span><input type="date" name="date" required></label>
+      <label class="field"><span>人数</span><select name="people"><option>1名</option><option>2名</option></select></label>
+    </div>
+    <label class="field"><span>お名前</span><input type="text" name="name" autocomplete="off" placeholder="深淵 太郎" required></label>
+    <label class="field"><span>メールアドレス</span><input type="email" name="email" autocomplete="off" placeholder="sample@example.com" required></label>
+    <label class="field"><span>ご要望（任意）</span><textarea name="note" rows="3" placeholder="見てみたい生きものなど"></textarea></label>
+
+    <p class="book__error" id="bookError" role="alert"></p>
+    <button class="book__submit" type="submit"><span>この内容で予約する</span></button>
+  </form>
+
+  <div class="book__done" id="bookDone" hidden>
+    <span class="book__doneLight" aria-hidden="true"></span>
+    <h2 class="book__title">ご予約ありがとうございました。</h2>
+    <p class="book__doneText" id="bookDoneText"></p>
+    <p class="book__notice">※ サンプルのため、実際の予約や送信は行われていません。</p>
+    <button class="book__submit" type="button" data-close><span>海へ戻る</span></button>
+  </div>
+</dialog>
+
+<div class="depth" aria-hidden="true">
+  <div class="depth__read">
+    <div class="depth__label">DEPTH</div>
+    <div class="depth__num"><span id="depthNum">0</span><small>m</small></div>
+    <div class="depth__zone" id="depthZone">表層</div>
+  </div>
+  <div class="depth__bar"><span class="depth__dot" id="depthDot"></span></div>
+</div>
+
+<footer class="ft">© 2026 mae.exe　本文・画像・プログラムの無断転載・複製を禁止します。<br>※ 深淵ツーリズムは架空の企業です。生物の描写はイメージです。</footer>
+
+<script>
+  /* キャッチコピーを1文字ずつ浮かび上がらせる */
+  (function(){
+    var h = document.getElementById('catch'), i = 0;
+    h.querySelectorAll('.ln').forEach(function(ln){
+      var t = ln.textContent; ln.textContent = '';
+      for (var c of t){
+        var s = document.createElement('span');
+        s.className = 'ch'; s.textContent = c;
+        s.style.animationDelay = (0.35 + i * 0.07) + 's';
+        ln.appendChild(s); i++;
+      }
+    });
+  })();
+
+  /* 層の見出しを、画面に入ったらふわっと出す */
+  (function(){
+    var io = new IntersectionObserver(function(es){
+      es.forEach(function(e){ if (e.isIntersecting){ e.target.classList.add('is-in'); io.unobserve(e.target); } });
+    }, { threshold: .3 });
+    document.querySelectorAll('.zone__label, .reveal').forEach(function(el){ io.observe(el); });
+  })();
+
+  /* 予約フォーム（ダミー）：提灯のボタンで開く。入力内容はどこにも送信しない */
+  (function(){
+    var dlg = document.getElementById('book'), form = document.getElementById('bookForm'),
+        done = document.getElementById('bookDone'), err = document.getElementById('bookError'),
+        doneText = document.getElementById('bookDoneText'), opener = null;
+    if (!dlg || !dlg.showModal) return;
+    var date = form.elements.date, d = new Date(); d.setDate(d.getDate() + 7);
+    date.min = d.toISOString().slice(0, 10);   /* 1週間後から選べる */
+
+    function open(e){
+      opener = e.currentTarget;
+      form.hidden = false; done.hidden = true; err.textContent = '';
+      form.querySelectorAll('.is-bad').forEach(function(f){ f.classList.remove('is-bad'); });
+      dlg.showModal(); document.documentElement.classList.add('is-locked');
+    }
+    function close(){ dlg.close(); }
+    dlg.addEventListener('close', function(){
+      document.documentElement.classList.remove('is-locked');
+      if (opener) opener.focus({ preventScroll: true });
+    });
+    document.querySelectorAll('.lure').forEach(function(b){ b.addEventListener('click', open); });
+    dlg.querySelectorAll('[data-close]').forEach(function(b){ b.addEventListener('click', close); });
+    dlg.addEventListener('click', function(e){ if (e.target === dlg) close(); });   /* 外側をクリックで閉じる */
+
+    form.addEventListener('submit', function(e){
+      e.preventDefault();
+      var bad = [];
+      ['date', 'name', 'email'].forEach(function(n){
+        var el = form.elements[n], ok = el.value.trim() !== '' && el.checkValidity();
+        el.closest('.field').classList.toggle('is-bad', !ok);
+        if (!ok) bad.push({ date: 'ご希望の日', name: 'お名前', email: 'メールアドレス' }[n]);
+      });
+      if (bad.length){ err.textContent = bad.join('・') + 'を確認してください。'; return; }
+      var f = form.elements, day = new Date(f.date.value);
+      doneText.innerHTML = '';
+      [f.course.value + '（' + f.people.value + '）', (day.getMonth() + 1) + '月' + day.getDate() + '日', f.name.value.trim() + ' さま']
+        .forEach(function(t, i){ if (i) doneText.appendChild(document.createElement('br')); doneText.appendChild(document.createTextNode(t)); });
+      form.reset(); form.hidden = true; done.hidden = false;
+      done.querySelector('[data-close]').focus();
+    });
+  })();
+
+  /* 水深：画面の中心が、どの層の境目の間にあるかで計算する */
+  window.diveDepth = 0;
+  (function(){
+    var num = document.getElementById('depthNum'), dot = document.getElementById('depthDot'), zone = document.getElementById('depthZone');
+    var secs = ['twilight','midnight','abyss','reserve'].map(function(id){ return document.getElementById(id); });
+    var marks = [], ticking = false;
+    function layout(){
+      var vh = innerHeight, end = secs[3];
+      marks = [[vh/2, 0], [secs[0].offsetTop, 200], [secs[1].offsetTop, 1000], [secs[2].offsetTop, 3000],
+               [end.offsetTop + end.offsetHeight * .45, 6000]];
+      update();
+    }
+    function update(){
+      var c = scrollY + innerHeight / 2, d = 0;
+      if (c >= marks[marks.length-1][0]) d = 6000;
+      else for (var i = 0; i < marks.length - 1; i++){
+        var a = marks[i], b = marks[i+1];
+        if (c >= a[0] && c < b[0]){ d = a[1] + (b[1] - a[1]) * (c - a[0]) / (b[0] - a[0]); break; }
+      }
+      window.diveDepth = d;
+      num.textContent = Math.round(d).toLocaleString();
+      zone.textContent = d < 200 ? '表層' : d < 1000 ? '薄明' : d < 3000 ? '真夜中' : '深淵';
+      var max = document.documentElement.scrollHeight - innerHeight;
+      var p = max > 0 ? Math.min(1, Math.max(0, scrollY / max)) : 0;
+      dot.style.top = 'calc(' + (p * 100) + '% - 3px)';
+      ticking = false;
+    }
+    addEventListener('scroll', function(){ if(!ticking){ ticking = true; requestAnimationFrame(update); } }, {passive:true});
+    addEventListener('resize', layout);
+    addEventListener('load', layout);
+    layout();
+  })();
+</script>
+
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js" } }
+</script>
+<script type="module">
+  import * as THREE from 'three';
+
+  const canvas = document.getElementById('sea');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const small = matchMedia('(max-width: 720px)').matches;
+
+  let renderer;
+  try {
+    renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'low-power' });
+  } catch (e) { /* WebGLが使えない環境はCSSの背景のまま */ }
+
+  if (renderer) {
+    document.documentElement.classList.add('gl');
+    renderer.setPixelRatio(Math.min(devicePixelRatio, small ? 1.25 : 1.5));
+    const PR = renderer.getPixelRatio();
+    renderer.autoClear = false;   /* 2D の海 → 3D の生物 の順に重ねて描くため */
+    const scene = new THREE.Scene();
+    /* 画面の高さ＝2、横幅＝2×縦横比 の座標で生物を置く */
+    const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, -10, 10);
+    let aspect = 1, vh = innerHeight;
+    const uTime = { value: 0 }, uScroll = { value: 0 };
+
+    /* ============ 海（背景）：すべてシェーダーで描画・画像なし ============ */
+    const seaMat = new THREE.ShaderMaterial({
+      depthWrite: false, depthTest: false,
+      uniforms: {
+        uTime, uRes: { value: new THREE.Vector2(1, 1) },
+        uMouse: { value: new THREE.Vector2(0, 0) }, uDepth: { value: 0 }
+      },
+      vertexShader: `
+        varying vec2 vUv;
+        void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }`,
+      fragmentShader: `
+        precision highp float;
+        varying vec2 vUv;
+        uniform float uTime; uniform vec2 uRes; uniform vec2 uMouse; uniform float uDepth;
+
+        float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+        float noise(vec2 p){
+          vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f);
+          return mix(mix(hash(i), hash(i+vec2(1,0)), f.x), mix(hash(i+vec2(0,1)), hash(i+vec2(1,1)), f.x), f.y);
+        }
+        float fbm(vec2 p){ float v = 0.0, a = 0.5; for(int i=0;i<4;i++){ v += a*noise(p); p *= 2.03; a *= 0.5; } return v; }
+
+        /* 割り算を使わない作り方にして、黒い点やちらつきが出ないようにしている */
+        float caustic(vec2 p, float t){
+          vec2 q = p + vec2(fbm(p * 1.1 + vec2(t * 0.18, 0.0)), fbm(p * 1.1 + vec2(4.0, -t * 0.15))) * 1.6;
+          float a = 1.0 - abs(noise(q * 2.2 + t * 0.25) * 2.0 - 1.0);
+          float b = 1.0 - abs(noise(q * 3.1 - t * 0.2 + 7.0) * 2.0 - 1.0);
+          return pow(a, 10.0) * 0.7 + pow(b, 12.0) * 0.5;
+        }
+
+        void main(){
+          float aspect = uRes.x / uRes.y;
+          vec2 uv = vUv;
+          vec2 p = (uv - 0.5) * vec2(aspect, 1.0);
+          float t = uTime;
+          float y = uv.y;
+          float shallow01 = smoothstep(260.0, 0.0, uDepth);   /* 水面の光が届く度合い */
+
+          vec3 deep  = vec3(0.008, 0.039, 0.071);
+          vec3 mid   = vec3(0.035, 0.235, 0.305);
+          vec3 shallow = vec3(0.235, 0.62, 0.64);
+          vec3 col = mix(deep, mid, smoothstep(0.0, 0.62, y));
+          col = mix(col, shallow, smoothstep(0.55, 1.05, y));
+
+          /* 光の筋 */
+          vec2 src = vec2(0.18 * aspect + uMouse.x * 0.25, 0.95);
+          vec2 d = p - (src - vec2(0.0, 0.5));
+          float ang = atan(d.x, -d.y);
+          float rays = fbm(vec2(ang * 7.0, t * 0.12)) * 0.65 + fbm(vec2(ang * 19.0 - t * 0.05, 3.1)) * 0.45;
+          rays = smoothstep(0.42, 1.0, rays);
+          float fall = smoothstep(1.35, 0.0, length(d)) * smoothstep(-0.2, 0.6, y);
+          col += vec3(0.55, 0.92, 0.88) * rays * fall * 0.3 * shallow01;
+
+          /* 水面のきらめき */
+          vec2 cp = vec2(p.x * 2.2, (y - 0.5) * 5.0) + uMouse * 0.15;
+          float cs = caustic(cp, t);
+          float surf = smoothstep(0.68, 1.0, y);
+          col += vec3(0.7, 1.0, 0.95) * cs * surf * 0.4 * smoothstep(120.0, 0.0, uDepth);
+
+          float wave = fbm(vec2(p.x * 3.0 + t * 0.15, t * 0.1)) * 0.06;
+          float band = smoothstep(0.92 + wave, 1.0 + wave, y);
+          col = mix(col, vec3(0.82, 0.97, 0.95), band * 0.35 * smoothstep(120.0, 0.0, uDepth));
+
+          /* にごり */
+          col += (fbm(p * 3.0 + vec2(0.0, -t * 0.03)) - 0.5) * 0.035;
+
+          float vig = smoothstep(1.25, 0.25, length((uv - vec2(0.5, 0.6)) * vec2(aspect * 0.8, 1.0)));
+          col *= mix(0.55, 1.0, vig);
+
+          /* 深くなるほど光が失われる。薄明（200〜1000m）は深い青を残し、1000mより下でほぼ闇になる */
+          float light = exp(-uDepth / 260.0);
+          vec3 twilightCol = vec3(0.012, 0.055, 0.1);
+          vec3 nightCol = vec3(0.004, 0.012, 0.024);
+          vec3 abyssCol = mix(twilightCol, nightCol, smoothstep(250.0, 1400.0, uDepth));
+          abyssCol += vec3(0.0, 0.01, 0.02) * vig * (1.0 - smoothstep(800.0, 2500.0, uDepth));
+          col = mix(abyssCol, col, light);
+
+          col = col / (1.0 + col * 0.45) * 1.25;
+          col += (hash(gl_FragCoord.xy + t) - 0.5) / 255.0;
+          gl_FragColor = vec4(col, 1.0);
+        }`
+    });
+    const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), seaMat);
+    quad.frustumCulled = false; quad.renderOrder = -10;
+    scene.add(quad);
+
+    /* ============ マリンスノー（潜るほど上へ流れていく） ============ */
+    {
+      const COUNT = small ? 180 : 380;
+      const pos = new Float32Array(COUNT * 3), seed = new Float32Array(COUNT);
+      for (let i = 0; i < COUNT; i++) {
+        pos[i*3] = Math.random() * 2 - 1; pos[i*3+1] = Math.random() * 2 - 1; pos[i*3+2] = Math.random();
+        seed[i] = Math.random() * 100;
+      }
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      g.setAttribute('aSeed', new THREE.BufferAttribute(seed, 1));
+      const m = new THREE.ShaderMaterial({
+        transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending,
+        uniforms: { uTime, uScroll, uPR: { value: PR }, uMouse: seaMat.uniforms.uMouse },
+        vertexShader: `
+          attribute float aSeed; uniform float uTime; uniform float uScroll; uniform float uPR; uniform vec2 uMouse;
+          varying float vA;
+          void main(){
+            vec3 p = position; float z = p.z;
+            p.y = mod(p.y + 1.0 - uTime * (0.006 + z * 0.012) + uScroll * (0.25 + z * 0.55), 2.0) - 1.0;
+            p.x += sin(uTime * 0.2 + aSeed) * 0.02 + uMouse.x * z * 0.03;
+            vA = (0.15 + z * 0.55) * (0.6 + 0.4 * sin(uTime * 0.8 + aSeed));
+            gl_Position = vec4(p.xy, 0.0, 1.0);
+            gl_PointSize = (1.0 + z * 3.2) * uPR;
+          }`,
+        fragmentShader: `
+          varying float vA;
+          void main(){
+            float a = smoothstep(0.5, 0.0, length(gl_PointCoord - 0.5)) * vA;
+            gl_FragColor = vec4(vec3(0.8, 1.0, 0.97) * a, a);
+          }`
+      });
+      const pts = new THREE.Points(g, m); pts.frustumCulled = false; pts.renderOrder = 5;
+      scene.add(pts);
+    }
+
+    /* ============ 生物づくりの道具 ============ */
+    const creatures = [];
+    /* sec：置く場所（id か要素）、frac：その中のどの高さか、to：どの舞台に置くか（2D／3D） */
+    function addCreature(sec, frac, obj, update, to = scene) {
+      creatures.push({ sec: typeof sec === 'string' ? document.getElementById(sec) : sec, frac, obj, update, anchor: 0 });
+      to.add(obj);
+    }
+
+    /* ============ 3Dの舞台（大きな生物用） ============
+       遠近感のあるカメラ。z=0 の面では、2Dの生物と同じ座標になるように距離を合わせている */
+    const scene3 = new THREE.Scene();
+    const FOV = 30, CAM_Z = 1 / Math.tan(THREE.MathUtils.degToRad(FOV / 2));
+    const cam3 = new THREE.PerspectiveCamera(FOV, 1, 0.1, 40);
+    cam3.position.set(0, 0, CAM_Z);
+    scene3.fog = new THREE.FogExp2(0x0a3340, 0.07);
+    const hemi = new THREE.HemisphereLight(0xbfeee8, 0x06141a, 1.6);
+    const sun = new THREE.DirectionalLight(0xe8fff9, 2.4); sun.position.set(0.6, 3, 1.4);
+    /* 潜水艇のライト：深くなると点灯し、画面の中央付近だけを照らす */
+    const subLight = new THREE.SpotLight(0xe6f2ff, 0, 0, 0.42, 1, 0);
+    subLight.position.set(0, 0.2, CAM_Z); subLight.target.position.set(0, 0, -0.5);
+    scene3.add(hemi, sun, subLight, subLight.target);
+    const fogShallow = new THREE.Color(0x0e4a58), fogTwilight = new THREE.Color(0x061d33), fogNight = new THREE.Color(0x02070e);
+    const add3 = (sec, frac, obj, update) => addCreature(sec, frac, obj, update, scene3);
+
+    const mat = (color, o = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.6, metalness: 0, ...o });
+    /* 胴体：輪郭（半径, 長さ方向の位置）を回転させて作り、頭が +x を向くように寝かせる */
+    function bodyAlongX(profile, squashZ = 1, segs = 40) {
+      const pts = new THREE.SplineCurve(profile.map(([r, h]) => new THREE.Vector2(r, h))).getPoints(60)
+        .map(v => new THREE.Vector2(Math.max(v.x, 0.0005), v.y));
+      const g = new THREE.LatheGeometry(pts, segs);
+      g.rotateZ(-Math.PI / 2); g.scale(1, 1, squashZ);
+      return g;
+    }
+    /* 上が濃く、腹が明るい色づけ（魚の体色の基本） */
+    function shade(geo, top, belly, lo = 0.3, hi = 0.7) {
+      geo.computeBoundingBox();
+      const p = geo.attributes.position, bb = geo.boundingBox, a = new THREE.Color(top), b = new THREE.Color(belly), c = new THREE.Color();
+      const col = new Float32Array(p.count * 3);
+      for (let i = 0; i < p.count; i++) {
+        const t = (p.getY(i) - bb.min.y) / ((bb.max.y - bb.min.y) || 1);
+        c.copy(b).lerp(a, THREE.MathUtils.smoothstep(t, lo, hi)); col[i*3] = c.r; col[i*3+1] = c.g; col[i*3+2] = c.b;
+      }
+      geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+      return geo;
+    }
+    /* ひれ：平面の形に少し厚みと丸みをつける */
+    function fin(draw, material, thick = 0.03) {
+      const s = new THREE.Shape(); draw(s);
+      const g = new THREE.ExtrudeGeometry(s, { depth: thick, bevelEnabled: true, bevelThickness: thick * 0.5, bevelSize: thick * 0.6, bevelSegments: 2, curveSegments: 14 });
+      g.translate(0, 0, -thick / 2);
+      return new THREE.Mesh(g, material);
+    }
+    const sphere = (r, material, ws = 32, hs = 20) => new THREE.Mesh(new THREE.SphereGeometry(r, ws, hs), material);
+    /* 部位ごとの色（「ぺらっと仕上げ」で使う） */
+    const OCTO_EYE = { color: 0x1a0604, opacity: 0.85, rim: 0 };
+    const MOUTH = { color: 0x000000, opacity: 1, rim: 0 };
+    const ANGLER_EYE = { color: 0x3a6e6a, opacity: 1, rim: 0 };
+    const DOME = { color: 0x9ff3e6, opacity: 0.06, rim: 1.0, rimColor: 0xbffff4 };
+    const flat = (color, opacity, additive) => new THREE.MeshBasicMaterial({
+      color, transparent: true, opacity, depthWrite: false, depthTest: false,
+      blending: additive ? THREE.AdditiveBlending : THREE.NormalBlending
+    });
+    const shapeMesh = (draw, mat) => { const s = new THREE.Shape(); draw(s); return new THREE.Mesh(new THREE.ShapeGeometry(s, 10), mat); };
+    const glowTex = (() => {
+      const c = document.createElement('canvas'); c.width = c.height = 64;
+      const x = c.getContext('2d'), gr = x.createRadialGradient(32, 32, 0, 32, 32, 32);
+      gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(.35, 'rgba(255,255,255,.35)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+      x.fillStyle = gr; x.fillRect(0, 0, 64, 64);
+      return new THREE.CanvasTexture(c);
+    })();
+    const glowSprite = (color, opacity, size) => {
+      const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color, transparent: true, opacity,
+        blending: THREE.AdditiveBlending, depthWrite: false, depthTest: false }));
+      s.scale.set(size, size, 1); return s;
+    };
+    /* 光る点の集まり（発光器・クラゲの光など） */
+    function glowPoints(n) {
+      const pos = new Float32Array(n * 3), col = new Float32Array(n * 3), a = new Float32Array(n), sz = new Float32Array(n);
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      g.setAttribute('aCol', new THREE.BufferAttribute(col, 3));
+      g.setAttribute('aA', new THREE.BufferAttribute(a, 1));
+      g.setAttribute('aS', new THREE.BufferAttribute(sz, 1));
+      const m = new THREE.ShaderMaterial({
+        transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending,
+        uniforms: { uPR: { value: PR } },
+        vertexShader: `
+          attribute vec3 aCol; attribute float aA; attribute float aS; uniform float uPR;
+          varying vec3 vC; varying float vA;
+          void main(){ vC = aCol; vA = aA; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); gl_PointSize = aS * uPR; }`,
+        fragmentShader: `
+          varying vec3 vC; varying float vA;
+          void main(){
+            float d = length(gl_PointCoord - 0.5);
+            float core = smoothstep(0.16, 0.0, d);              /* 芯 */
+            float halo = smoothstep(0.5, 0.0, d); halo *= halo; /* まわりのにじみ */
+            gl_FragColor = vec4(vC, (core + halo * 0.45) * vA);
+          }`
+      });
+      const p = new THREE.Points(g, m); p.frustumCulled = false; p.renderOrder = 8;
+      return { p, pos, col, a, sz, n, commit() { for (const k of ['position', 'aCol', 'aA', 'aS']) g.attributes[k].needsUpdate = true; } };
+    }
+    const setCol = (arr, i, hex) => { const c = new THREE.Color(hex); arr[i*3] = c.r; arr[i*3+1] = c.g; arr[i*3+2] = c.b; };
+    const rand = (a, b) => a + Math.random() * (b - a);
+    const gauss = () => (Math.random() + Math.random() + Math.random() - 1.5) / 1.5;
+
+    /* ============ 0〜200m 表層 ============ */
+
+    /* カタクチイワシの群れ（画面の上の方を横切る） */
+    {
+      const sh = new THREE.Shape();
+      sh.moveTo(1, 0); sh.quadraticCurveTo(0.35, 0.3, -0.55, 0.07); sh.lineTo(-1, 0.3); sh.lineTo(-0.82, 0);
+      sh.lineTo(-1, -0.3); sh.lineTo(-0.55, -0.07); sh.quadraticCurveTo(0.35, -0.3, 1, 0);
+      const base = new THREE.ShapeGeometry(sh, 5);
+      const N = small ? 46 : 84;
+      const geo = new THREE.InstancedBufferGeometry();
+      geo.index = base.index; geo.setAttribute('position', base.getAttribute('position')); geo.instanceCount = N;
+      const off = new Float32Array(N * 3), ph = new Float32Array(N);
+      for (let i = 0; i < N; i++) { off[i*3] = gauss() * 0.42; off[i*3+1] = gauss() * 0.11; off[i*3+2] = Math.random(); ph[i] = Math.random(); }
+      geo.setAttribute('aOff', new THREE.InstancedBufferAttribute(off, 3));
+      geo.setAttribute('aPhase', new THREE.InstancedBufferAttribute(ph, 1));
+      const mat = new THREE.ShaderMaterial({
+        transparent: true, depthWrite: false, depthTest: false,
+        uniforms: { uTime, uScroll },
+        vertexShader: `
+          attribute vec3 aOff; attribute float aPhase;
+          uniform float uTime; uniform float uScroll;
+          varying float vA; varying float vGlint;
+          void main(){
+            vec3 lp = position; float t = uTime;
+            float tail = smoothstep(0.3, -1.0, lp.x);
+            lp.y += sin(t * 11.0 + aPhase * 30.0 + lp.x * 2.5) * 0.2 * tail;
+            float span = 1.0 / projectionMatrix[0][0] + 1.0;   /* 画面の半分の横幅＋余白 */
+            float u = fract((t + 8.0) / 38.0);
+            vec2 c = vec2(mix(-span, span, u), 0.4 + sin(u * 9.42) * 0.07 + uScroll);
+            vec2 wander = vec2(sin(t * 0.7 + aPhase * 40.0), cos(t * 0.9 + aPhase * 25.0)) * 0.035;
+            float size = 0.02 * (0.65 + aOff.z * 0.7);
+            float tilt = cos(u * 9.42) * 0.22;
+            vec2 r = vec2(lp.x * cos(tilt) - lp.y * sin(tilt), lp.x * sin(tilt) + lp.y * cos(tilt));
+            vec2 w = c + aOff.xy + wander + r * size;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(w, 0.0, 1.0);
+            vA = 0.28 + aOff.z * 0.42;
+            vGlint = pow(max(sin(t * 0.9 + aPhase * 50.0), 0.0), 30.0);
+          }`,
+        fragmentShader: `
+          varying float vA; varying float vGlint;
+          void main(){
+            vec3 col = mix(vec3(0.02, 0.13, 0.17), vec3(0.85, 1.0, 0.97), vGlint * 0.8);
+            gl_FragColor = vec4(col, vA);
+          }`
+      });
+      const school = new THREE.Mesh(geo, mat); school.frustumCulled = false;
+      scene.add(school);
+    }
+
+    /* アカウミガメ（3D）：甲羅の模様もコードで生成 */
+    {
+      /* 甲羅の模様：上から見た図に、甲板（こうばん）の区切りを描く */
+      const scuteTex = (() => {
+        const S = 256, c = document.createElement('canvas'); c.width = c.height = S;
+        const x = c.getContext('2d'), img = x.createImageData(S, S);
+        const cs = [[-0.62,0],[-0.22,0],[0.18,0],[0.56,0],
+                    [-0.45,0.42],[-0.02,0.46],[0.4,0.4],[-0.45,-0.42],[-0.02,-0.46],[0.4,-0.4]];
+        for (let k = 0; k < 14; k++) { const a = k / 14 * Math.PI * 2; cs.push([Math.cos(a) * 0.9, Math.sin(a) * 0.86]); }
+        const tone = cs.map(() => 0.85 + Math.random() * 0.3);
+        for (let j = 0; j < S; j++) for (let i = 0; i < S; i++) {
+          const px = i / S * 2 - 1, pz = j / S * 2 - 1;
+          let d1 = 9, d2 = 9, k1 = 0;
+          cs.forEach((q, k) => { const d = Math.hypot(px - q[0], pz - q[1]); if (d < d1) { d2 = d1; d1 = d; k1 = k; } else if (d < d2) d2 = d; });
+          const edge = Math.min(1, (d2 - d1) / 0.05);           /* 区切り線 */
+          const inner = 1 - Math.min(1, d1 / 0.45) * 0.35;     /* 甲板の中心ほど明るい */
+          const v = edge * inner * tone[k1];
+          const o = (j * S + i) * 4;
+          img.data[o] = 40 + 118 * v; img.data[o+1] = 26 + 70 * v; img.data[o+2] = 14 + 30 * v; img.data[o+3] = 255;
+        }
+        x.putImageData(img, 0, 0);
+        const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+      })();
+
+      const g = new THREE.Group();
+      const shellGeo = new THREE.SphereGeometry(1, 56, 24, 0, Math.PI * 2, 0, Math.PI / 2);
+      { const p = shellGeo.attributes.position, uv = shellGeo.attributes.uv;
+        for (let i = 0; i < p.count; i++) uv.setXY(i, p.getX(i) * 0.5 + 0.5, p.getZ(i) * 0.5 + 0.5); }
+      shellGeo.scale(1.15, 0.42, 0.95);
+      const shell = new THREE.Mesh(shellGeo, new THREE.MeshStandardMaterial({ map: scuteTex, roughness: 0.5 }));
+      const plastron = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 12, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), mat(0xd9c99a, { roughness: 0.75 }));
+      plastron.scale.set(1.1, 0.16, 0.9);
+      const skin = mat(0x8a7a5c, { roughness: 0.7 });
+      const head = sphere(0.34, skin); head.scale.set(1.35, 0.85, 0.95); head.position.set(1.36, 0.05, 0);
+      const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.25, 0.55, 20), skin); neck.rotation.z = Math.PI / 2; neck.position.set(1.02, 0.0, 0);
+      const eyeM = mat(0x050505, { roughness: 0.15 });
+      [-1, 1].forEach(s => { const e = sphere(0.055, eyeM, 12, 8); e.position.set(1.62, 0.14, 0.22 * s); g.add(e); });
+      /* ひれ足：前足は長い翼のように、後ろ足は短く */
+      const flip = s => { s.moveTo(-0.16, 0); s.quadraticCurveTo(-0.3, 0.8, -0.6, 1.65); s.quadraticCurveTo(0.05, 0.95, 0.22, 0.0); s.lineTo(-0.16, 0); };
+      const limb = (x, z, side, sc) => {
+        const pv = new THREE.Group(); pv.position.set(x, -0.04, z);
+        const f = fin(flip, skin, 0.07); f.rotation.x = side * Math.PI / 2; f.scale.setScalar(sc);
+        pv.add(f); g.add(pv); return pv;
+      };
+      const fl = [limb(0.62, 0.6, 1, 1), limb(0.62, -0.6, -1, 1)];
+      const bl = [limb(-0.92, 0.5, 1, 0.42), limb(-0.92, -0.5, -1, 0.42)];
+      g.add(shell, plastron, head, neck);
+      g.scale.setScalar(0.15);
+      g.userData.flat = { color: 0x04202a, opacity: 0.62, rim: 0.3, rimColor: 0x9ff3e6 };
+      add3('surface', 1.08, g, (t, y) => {
+        const span = aspect + 0.6, u = ((t / 60) + 0.3) % 1;
+        g.position.set(span - u * 2 * span, y + Math.sin(t * 0.5) * 0.03, -0.3);
+        const f = Math.sin(t * 1.3);
+        fl[0].rotation.x =  f * 0.6; fl[1].rotation.x = -f * 0.6;
+        fl[0].rotation.y = fl[1].rotation.y = Math.sin(t * 1.3 - 0.8) * 0.25;
+        bl[0].rotation.x =  f * 0.25; bl[1].rotation.x = -f * 0.25;
+        /* 左へ泳ぐ。少し斜め上から甲羅が見える角度 */
+        g.rotation.set(0.5 + f * 0.04, Math.PI + 0.35, Math.sin(t * 0.4) * 0.05);
+      });
+    }
+
+    /* ============ 200〜1000m 薄明 ============ */
+
+    /* サクラエビの群れ（駿河湾の名物。小さな発光器を持つ） */
+    {
+      const N = small ? 36 : 64;
+      const shape = new THREE.Shape();
+      shape.moveTo(-1, 0); shape.quadraticCurveTo(0, 0.55, 1, 0.12); shape.lineTo(1.1, -0.04);
+      shape.quadraticCurveTo(0, 0.22, -1, -0.16); shape.lineTo(-1, 0);
+      const ant = new THREE.Shape(); ant.moveTo(1, 0.06); ant.lineTo(3.2, 0.5); ant.lineTo(1, 0.0);
+      const geo = new THREE.ShapeGeometry([shape, ant], 6);
+      const im = new THREE.InstancedMesh(geo, flat(0xff8fa6, 0.34), N); im.frustumCulled = false;
+      const gp = glowPoints(N);
+      const seeds = [...Array(N)].map(() => ({ x: gauss() * 0.55, y: gauss() * 0.28, ph: Math.random() * 6.28, s: rand(0.010, 0.017), dir: Math.random() < .8 ? 1 : -1 }));
+      for (let i = 0; i < N; i++) { setCol(gp.col, i, 0xff9fd0); gp.sz[i] = rand(5, 8); }
+      const g = new THREE.Group(); g.add(im, gp.p);
+      const d = new THREE.Object3D();
+      addCreature('twilight', 0.28, g, (t, y) => {
+        const cx = aspect * 0.32;
+        seeds.forEach((s, i) => {
+          const hop = Math.pow(Math.max(Math.sin(t * 0.8 + s.ph * 3), 0), 14) * 0.05;   /* ときどきピッと跳ねる */
+          const x = cx + s.x + Math.sin(t * 0.3 + s.ph) * 0.06 + hop * s.dir;
+          const yy = y + s.y + Math.cos(t * 0.4 + s.ph) * 0.04;
+          d.position.set(x, yy, 0); d.rotation.set(0, 0, Math.sin(t * 0.5 + s.ph) * 0.3);
+          d.scale.set(s.s * s.dir, s.s, 1); d.updateMatrix(); im.setMatrixAt(i, d.matrix);
+          gp.pos[i*3] = x - s.dir * s.s * 0.6; gp.pos[i*3+1] = yy; gp.a[i] = 0.35 + 0.35 * Math.sin(t * 2 + s.ph * 5);
+        });
+        im.instanceMatrix.needsUpdate = true; gp.commit();
+      });
+    }
+
+    /* タコの形（3D、メンダコ・ジュウモンジダコで共用）
+       傘の輪郭を回転させて作り、ふちを8本の腕に合わせて波打たせる */
+    function makeOcto({ top, belly, emissive, tall, ear }) {
+      const prof = [[0.001,-0.07],[0.5,-0.1],[0.92,-0.06],[1.08,0.02],[1.0,0.16],[0.84,0.4*tall],[0.55,0.62*tall],[0.22,0.72*tall],[0.001,0.74*tall]];
+      const pts = new THREE.SplineCurve(prof.map(([r, h]) => new THREE.Vector2(r, h))).getPoints(48).map(v => new THREE.Vector2(Math.max(v.x, 0.0005), v.y));
+      const geo = new THREE.LatheGeometry(pts, 72);
+      const p = geo.attributes.position;
+      for (let i = 0; i < p.count; i++) {
+        const x = p.getX(i), y = p.getY(i), z = p.getZ(i), r = Math.hypot(x, z), th = Math.atan2(z, x);
+        if (y < 0.14) {
+          const w = THREE.MathUtils.smoothstep(r, 0.55, 1.08);
+          const k = 1 + 0.08 * Math.cos(th * 8) * w;
+          p.setXYZ(i, x * k, y - 0.07 * Math.max(0, Math.cos(th * 8)) * w, z * k);
+        }
+      }
+      geo.computeVertexNormals();
+      shade(geo, top, belly, 0.15, 0.85);
+      const g = new THREE.Group();
+      const body = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.45, emissive, emissiveIntensity: 0.6 }));
+      body.rotation.y = Math.PI;   /* 継ぎ目を後ろ側へ */
+      const earM = new THREE.MeshStandardMaterial({ color: top, roughness: 0.5, emissive, emissiveIntensity: 0.6, side: THREE.DoubleSide });
+      const mkEar = side => {
+        const pv = new THREE.Group(); pv.position.set(side * 0.4, 0.6 * tall, 0);
+        const e = sphere(0.3, earM, 24, 12); e.scale.set(ear, 0.22 * ear, 0.7 * ear); e.position.set(side * 0.24 * ear, 0.02, 0);
+        pv.add(e); g.add(pv); return pv;
+      };
+      const eyeM = mat(0x0a0303, { roughness: 0.15 });
+      [-1, 1].forEach(s => { const e = sphere(0.075, eyeM, 14, 10); e.position.set(0.27 * s, 0.4 * tall, 0.8); e.userData.flat = OCTO_EYE; g.add(e); });
+      g.add(body);
+      return { g, body, earL: mkEar(-1), earR: mkEar(1) };
+    }
+
+    /* メンダコ（ふわふわ上下しながら耳をぱたぱた） */
+    {
+      const o = makeOcto({ top: 0xc24a30, belly: 0xf3a07e, emissive: 0x2a0804, tall: 1, ear: 0.85 });
+      o.g.scale.setScalar(0.12);
+      o.g.userData.flat = { color: 0xc0604a, opacity: 0.55, rim: 0.7, rimColor: 0xffb196 };
+      add3('twilight', 0.55, o.g, (t, y) => {
+        o.g.position.set(-aspect * 0.42 + Math.sin(t * 0.18) * 0.1, y + Math.sin(t * 0.8) * 0.05, 0);
+        const s = Math.sin(t * 1.6);
+        o.body.scale.set(1 + s * 0.03, 1 - s * 0.07, 1 + s * 0.03);
+        const f = Math.sin(t * 2.4) * 0.55; o.earL.rotation.z = f; o.earR.rotation.z = -f;
+        o.g.rotation.set(0.45 + Math.sin(t * 0.5) * 0.05, Math.sin(t * 0.3) * 0.4, Math.sin(t * 0.7) * 0.06);
+      });
+    }
+
+    /* デメニギス（3D）：頭は透明なドームで、中の緑の目が上を向いている */
+    {
+      const g = new THREE.Group();
+      const bodyGeo = shade(bodyAlongX([[0,-1.0],[0.06,-0.9],[0.2,-0.55],[0.27,-0.05],[0.28,0.35],[0.22,0.7],[0.1,0.95],[0,1.0]], 0.68), 0x34444c, 0xb9c7cd);
+      const body = new THREE.Mesh(bodyGeo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.35, metalness: 0.35 }));
+      const finM = mat(0x56666d, { roughness: 0.5, side: THREE.DoubleSide, transparent: true, opacity: 0.85 });
+      const tail = fin(s => { s.moveTo(0.05, 0); s.lineTo(-0.48, 0.34); s.quadraticCurveTo(-0.32, 0, -0.48, -0.32); s.lineTo(0.05, 0); }, finM, 0.02);
+      tail.position.set(-0.95, 0, 0);
+      const pect = side => { const f = fin(s => { s.moveTo(0, 0); s.quadraticCurveTo(-0.35, -0.75, -0.75, -0.62); s.quadraticCurveTo(-0.35, -0.3, 0, 0); }, finM, 0.015);
+        f.position.set(0.2, -0.12, 0.17 * side); f.rotation.x = side * 0.7; g.add(f); return f; };
+      const pl = pect(1), pr = pect(-1);
+      /* 透明なドーム：頭の幅にそろえて頭の上に埋め込み、下半分は体に隠れるようにする
+         （体から生えた透明な頭に見えるように。以前は幅が体より広く、別の物体に見えていた） */
+      const dome = sphere(1, new THREE.MeshStandardMaterial(), 40, 28);
+      dome.scale.set(0.44, 0.3, 0.17); dome.position.set(0.44, 0.1, 0);
+      dome.userData.flat = DOME; dome.userData.noDepth = true;   /* 中の目を隠さないよう、奥行きは書かない */
+      const eyeM = new THREE.MeshStandardMaterial({ color: 0x3dff94, emissive: 0x3dff94, emissiveIntensity: 1.6, roughness: 0.2 });
+      [-1, 1].forEach(s => { const e = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.055, 0.17, 20), eyeM); e.position.set(0.42, 0.2, 0.055 * s); e.userData.keep = true; g.add(e); });
+      const glow = glowSprite(0x6dffa8, 0.3, 0.6); glow.material.depthTest = true; glow.position.set(0.42, 0.28, 0);
+      g.add(body, tail, dome, glow);
+      g.scale.setScalar(0.17);
+      g.userData.flat = { color: 0x2f5866, opacity: 0.6, rim: 0.8, rimColor: 0x9ff3e6 };
+      add3('twilight', 0.82, g, (t, y) => {
+        g.position.set(aspect * 0.3 + Math.sin(t * 0.12) * 0.12, y + Math.sin(t * 0.5) * 0.03, 0);
+        g.rotation.set(Math.sin(t * 0.4) * 0.08, -0.5 + Math.sin(t * 0.2) * 0.35, Math.sin(t * 0.3) * 0.06);
+        tail.rotation.y = Math.sin(t * 2.2) * 0.25;
+        pl.rotation.z = Math.sin(t * 1.7) * 0.15; pr.rotation.z = Math.sin(t * 1.7 + 0.6) * 0.15;
+        glow.material.opacity = 0.22 + 0.08 * Math.sin(t * 1.3);
+      });
+    }
+
+    /* ============ 1000〜3000m 真夜中 ============ */
+
+    /* ハダカイワシ（体は見えず、腹に並んだ光だけが泳いでいく） */
+    {
+      const F = small ? 7 : 11, D = 7;
+      const gp = glowPoints(F * D);
+      const fish = [...Array(F)].map(() => ({ x: gauss() * 0.6, y: gauss() * 0.35, ph: Math.random() * 6.28, sp: rand(0.8, 1.2), s: rand(0.05, 0.075) }));
+      for (let i = 0; i < F * D; i++) { setCol(gp.col, i, 0x86d9ff); gp.sz[i] = (i % D === 0) ? 12 : 8; }
+      addCreature('midnight', 0.3, gp.p, (t, y) => {
+        const span = aspect + 0.8;
+        fish.forEach((f, i) => {
+          const u = ((t * f.sp / 70) + f.ph / 6.28) % 1;
+          const fx = -span + u * 2 * span + f.x, fy = y + f.y + Math.sin(t * 0.6 + f.ph) * 0.03;
+          for (let j = 0; j < D; j++) {
+            const k = i * D + j, lx = 0.9 - j * 0.3;
+            gp.pos[k*3] = fx + lx * f.s; gp.pos[k*3+1] = fy - 0.18 * f.s + Math.sin(lx * 1.2) * 0.04 * f.s;
+            gp.a[k] = 0.45 + 0.45 * Math.pow(Math.max(Math.sin(t * 1.4 + f.ph * 3 - j * 0.4), 0), 3);
+          }
+        });
+        gp.commit();
+      });
+    }
+
+    /* クダクラゲ（長いくさり状の体に、光の波が流れる） */
+    {
+      const N = 96, gp = glowPoints(N);
+      for (let i = 0; i < N; i++) { setCol(gp.col, i, i % 3 === 0 ? 0xb48cff : 0x7af3ff); gp.sz[i] = i < 4 ? 18 - i * 2 : 8 + (i % 3 === 0 ? 3 : 0); }
+      addCreature('midnight', 0.55, gp.p, (t, y) => {
+        const ox = -aspect * 0.35 + Math.sin(t * 0.08) * 0.15, oy = y + 0.35, a = -0.95 + Math.sin(t * 0.15) * 0.1;
+        const dx = Math.cos(a), dy = Math.sin(a);
+        for (let i = 0; i < N; i++) {
+          const s = i * 0.012, w = Math.sin(t * 1.1 - i * 0.14) * 0.05 * (i / N + 0.2);
+          gp.pos[i*3] = ox + dx * s - dy * w; gp.pos[i*3+1] = oy + dy * s + dx * w;
+          gp.a[i] = (0.14 + 0.7 * Math.pow(Math.max(Math.sin(t * 1.8 - i * 0.2), 0), 5)) * (1 - i / N * 0.6);
+        }
+        gp.commit();
+      });
+    }
+
+    /* ミツクリザメ（3D）：平たく長い吻（ふん）を持つピンク色のサメ。潜水艇のライトに照らされて横切る */
+    {
+      const g = new THREE.Group();
+      const geo = bodyAlongX([[0,-1.7],[0.05,-1.5],[0.14,-1.0],[0.25,-0.3],[0.29,0.15],[0.27,0.55],[0.21,0.85],[0.15,1.05],[0.13,1.3],[0.1,1.5],[0,1.58]], 0.85, 48);
+      { const p = geo.attributes.position;   /* 吻を上下に平たく、左右に広い刃のような形にする */
+        for (let i = 0; i < p.count; i++) {
+          const x = p.getX(i), k = THREE.MathUtils.smoothstep(x, 0.9, 1.3);
+          p.setY(i, p.getY(i) * (1 - k * 0.65) + 0.03 * k); p.setZ(i, p.getZ(i) * (1 + k * 0.35));
+        } }
+      geo.computeVertexNormals();
+      shade(geo, 0x8f646c, 0xd2a9ae);
+      const skin = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.7 });
+      const finM = mat(0x93666e, { roughness: 0.75 });
+      const body = new THREE.Mesh(geo, skin);
+      const dorsal1 = fin(s => { s.moveTo(0.1, 0); s.quadraticCurveTo(0.0, 0.3, -0.22, 0.34); s.lineTo(-0.38, 0); }, finM, 0.03); dorsal1.position.set(0.0, 0.22, 0);
+      const dorsal2 = fin(s => { s.moveTo(0.05, 0); s.quadraticCurveTo(0, 0.2, -0.15, 0.22); s.lineTo(-0.28, 0); }, finM, 0.03); dorsal2.position.set(-0.7, 0.16, 0);
+      const pect = side => { const f = fin(s => { s.moveTo(0.1, 0); s.quadraticCurveTo(-0.05, -0.32, -0.32, -0.42); s.lineTo(-0.2, 0); }, finM, 0.03);
+        f.position.set(0.5, -0.16, 0.16 * side); f.rotation.x = side * 0.9; g.add(f); };
+      pect(1); pect(-1);
+      const tailPv = new THREE.Group(); tailPv.position.set(-1.45, 0, 0);
+      const tail = fin(s => { s.moveTo(0.15, 0.06); s.lineTo(-0.85, 0.34); s.lineTo(-0.6, 0.04); s.lineTo(-0.4, -0.14); s.lineTo(0.12, -0.05); }, finM, 0.03);
+      tailPv.add(tail);
+      g.add(body, dorsal1, dorsal2, tailPv);
+      g.scale.setScalar(0.22);
+      g.userData.flat = { color: 0x6e4a56, opacity: 0.42, rim: 0.6, rimColor: 0xe0b0bc };
+      add3('midnight', 0.86, g, (t, y) => {
+        const span = aspect + 0.9, u = ((t / 64) + 0.6) % 1;
+        g.position.set(-span + u * 2 * span, y + Math.sin(t * 0.3) * 0.04, -0.4);
+        g.rotation.set(0.12, -0.3 + Math.sin(t * 1.1) * 0.06, Math.sin(t * 0.5) * 0.03);
+        tailPv.rotation.y = Math.sin(t * 1.1 + 1.2) * 0.3;
+      });
+    }
+
+    /* ============ 3000〜6000m 深淵 ============ */
+
+    /* 深淵にときどき灯る、正体のわからない光 */
+    {
+      const N = 14, gp = glowPoints(N);
+      const s = [...Array(N)].map(() => ({ x: rand(-1, 1), y: rand(-0.9, 0.9), ph: Math.random() * 20 }));
+      for (let i = 0; i < N; i++) { setCol(gp.col, i, i % 2 ? 0x9ff3e6 : 0x8fb4ff); gp.sz[i] = rand(9, 16); }
+      addCreature('abyss', 0.75, gp.p, (t, y) => {
+        s.forEach((p, i) => {
+          gp.pos[i*3] = p.x * aspect; gp.pos[i*3+1] = y + p.y;
+          gp.a[i] = Math.pow(Math.max(Math.sin(t * 0.5 + p.ph), 0), 18) * 0.9;
+        });
+        gp.commit();
+      });
+    }
+
+    /* ============ 6000m チョウチンアンコウ（3D） ============
+       体は提灯の光だけで照らされる。提灯の位置に、HTMLの予約ボタンを毎フレーム重ねる */
+    const anglerBox = document.querySelector('.angler');
+    const lureBtn = document.querySelector('.lure');
+    const lurePos = new THREE.Vector3();
+    const lureWorld = new THREE.Vector3();   /* 提灯の位置（海底を照らすのに使う） */
+    let anglerOn = false;
+    const angler = (() => {
+      const g = new THREE.Group();
+      const geo = new THREE.SphereGeometry(1, 72, 48);
+      const p = geo.attributes.position;
+      for (let i = 0; i < p.count; i++) {
+        let x = p.getX(i), y = p.getY(i), z = p.getZ(i);
+        const taper = x < 0 ? 1 + x * 0.68 : 1;              /* 尾に向かって細く */
+        y *= taper * 0.9; z *= taper * 0.7;
+        if (x > 0.1 && y > 0) y *= 1 + (x - 0.1) * 0.25;      /* 頭が大きく盛り上がる */
+        if (y < -0.55) y = -0.55 + (y + 0.55) * 0.35;         /* 腹は平ら */
+        const bump = 1 + Math.sin(x * 14) * Math.sin(y * 12) * Math.sin(z * 13) * 0.025;  /* ざらついた皮膚 */
+        let X = x * 1.3 * bump, Y = y * bump, Z = z * bump;
+        /* 口：体の前側に、横に大きく裂けた口をへこませて作る。下あごは少し前へ突き出す（受け口） */
+        if (X > 0.5) {
+          const m = THREE.MathUtils.smoothstep(X, 0.5, 1.3);
+          const c = (Y + 0.24) / 0.17;                          /* 口の高さの中心からの距離 */
+          if (Math.abs(c) < 1) X -= 0.42 * m * (1 - c * c);
+          if (Y < -0.41) X += 0.1 * m;
+        }
+        p.setXYZ(i, X, Y, Z);
+      }
+      geo.computeVertexNormals();
+      const skin = mat(0x3d322a, { roughness: 0.85 });
+      const body = new THREE.Mesh(geo, skin);
+      /* 口の奥：へこみの奥に、暗い面を1枚置いて「口の中」に見せる */
+      const mouth = sphere(1, mat(0), 32, 20); mouth.scale.set(0.08, 0.15, 0.42); mouth.position.set(0.86, -0.24, 0); mouth.userData.flat = MOUTH;
+      /* 歯：口のふちの内側に、細い牙を上下から内向きに並べる（外にはみ出さない長さ） */
+      const toothM = new THREE.MeshStandardMaterial({ color: 0xe9f3ee, roughness: 0.3, emissive: 0x1c3a36, emissiveIntensity: 0.4 });
+      const toothG = new THREE.ConeGeometry(0.018, 1, 6);
+      const lipX = z => 1.18 * Math.sqrt(Math.max(0, 1 - (z / 0.62) ** 2));   /* 口のふちの前後位置（横へ行くほど後ろ） */
+      for (let k = 0; k < 9; k++) {
+        const z = (k / 8 - 0.5) * 0.8, len = 0.07 + ((k * 7) % 5) * 0.012;
+        const up = new THREE.Mesh(toothG, toothM); up.scale.set(1, len, 1); up.rotation.set(0, 0, Math.PI - 0.35); up.userData.keep = true;
+        up.position.set(lipX(z) - 0.12, -0.09 - len * 0.4, z); g.add(up);
+        const lo = new THREE.Mesh(toothG, toothM); lo.scale.set(1, len * 1.15, 1); lo.rotation.set(0, 0, 0.35); lo.userData.keep = true;
+        lo.position.set(lipX(z) - 0.02, -0.4 + len * 0.45, z); g.add(lo);
+      }
+      const eyeM = mat(0x0b1a1c, { roughness: 0.1 });
+      [-1, 1].forEach(s => { const e = sphere(0.06, eyeM, 14, 10); e.position.set(0.72, 0.3, 0.6 * s); e.userData.flat = ANGLER_EYE; g.add(e); });
+      /* ひれ */
+      const finM = mat(0x241f1c, { roughness: 0.9, side: THREE.DoubleSide });
+      const tail = fin(s => { s.moveTo(0, 0); s.quadraticCurveTo(-0.4, 0.45, -0.7, 0.42); s.quadraticCurveTo(-0.55, 0, -0.7, -0.4); s.quadraticCurveTo(-0.35, -0.42, 0, 0); }, finM, 0.03);
+      tail.position.set(-1.05, 0, 0);
+      const pect = side => { const f = fin(s => { s.moveTo(0, 0); s.quadraticCurveTo(-0.2, -0.4, -0.45, -0.35); s.quadraticCurveTo(-0.3, -0.1, 0, 0); }, finM, 0.02);
+        f.position.set(0.05, -0.25, 0.62 * side); f.rotation.x = side * 0.5; g.add(f); return f; };
+      const pects = [pect(1), pect(-1)];
+      /* 提灯（誘引突起）：頭から前へ伸びる竿と、光る先端 */
+      const rod = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([
+        new THREE.Vector3(0.5, 0.82, 0), new THREE.Vector3(0.62, 1.3, 0), new THREE.Vector3(1.0, 1.66, 0), new THREE.Vector3(1.5, 1.62, 0)
+      ]), 48, 0.022, 8), skin);
+      const lure = sphere(0.085, new THREE.MeshBasicMaterial({ color: 0xdcfff8 }), 20, 14); lure.position.set(1.5, 1.6, 0);
+      const lureGlow = glowSprite(0x9ff3e6, 0.55, 1.4); lureGlow.material.depthTest = true; lureGlow.position.copy(lure.position);
+      const lureLight = new THREE.PointLight(0x9ff3e6, 12, 6, 1.2); lureLight.position.copy(lure.position);
+      g.add(body, mouth, tail, rod, lure, lureGlow, lureLight);
+      g.userData.flat = { color: 0x0b1a1e, opacity: 0.94, rim: 0.9, rimColor: 0x9ff3e6 };
+      return { g, lure, lureLight, tail, pects };
+    })();
+    add3(anglerBox, 0.6, angler.g, (t, y) => {
+      const s = (anglerBox.offsetWidth / (vh / 2)) / 4.2;
+      angler.g.scale.setScalar(s);
+      angler.g.position.set(s * 0.5, y - s * 0.4 + Math.sin(t * 0.5) * 0.02, 0);
+      /* 左を向き、顔をこちらへ向ける（π より大きくすると手前を向く） */
+      angler.g.rotation.set(0.08, Math.PI + 0.75 + Math.sin(t * 0.3) * 0.05, Math.sin(t * 0.4) * 0.02);
+      angler.tail.rotation.y = Math.sin(t * 1.4) * 0.25;
+      angler.pects.forEach((f, i) => f.rotation.z = Math.sin(t * 1.8 + i) * 0.2);
+      angler.lureLight.intensity = 6 + Math.sin(t * 2) * 1.2;
+      /* 提灯の画面上の位置を求めて、予約ボタンを重ねる */
+      angler.lure.getWorldPosition(lureWorld);
+      lurePos.copy(lureWorld).project(cam3);
+      const sx = (lurePos.x + 1) / 2 * innerWidth, sy = (1 - lurePos.y) / 2 * innerHeight;
+      lureBtn.style.transform = `translate(${sx - lureBtn.offsetWidth + 9}px, ${sy - lureBtn.offsetHeight / 2}px)`;
+      anglerOn = true;
+    });
+
+    /* ============ 追加の生物（2026-11-10） ============ */
+
+    /* 形を曲げる道具：元の形を覚えておき、毎フレーム「長さ方向の位置 x → 上下・左右のずれ」で曲げる
+       （リュウグウノツカイやラブカのうねり、イカの腕のゆらぎに使う） */
+    function bender(geo) {
+      const base = Float32Array.from(geo.attributes.position.array), p = geo.attributes.position;
+      return fn => {
+        for (let i = 0; i < p.count; i++) {
+          const x = base[i*3], d = fn(x);
+          p.setXYZ(i, x, base[i*3+1] + d[0], base[i*3+2] + d[1]);
+        }
+        p.needsUpdate = true;
+      };
+    }
+    /* 2点を結ぶ細い棒（ナガヅエエソの脚など） */
+    function rod2(a, b, r, material) {
+      const A = new THREE.Vector3(...a), B = new THREE.Vector3(...b), dir = B.clone().sub(A);
+      const m = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.6, r, dir.length(), 6), material);
+      m.position.copy(A).add(B).multiplyScalar(0.5);
+      m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.normalize());
+      return m;
+    }
+    /* クジラの尾びれ（水平に広がる） */
+    function fluke(material, w = 1) {
+      const pv = new THREE.Group();
+      const f = fin(s => { s.moveTo(0.1, 0); s.quadraticCurveTo(-0.15, 0.35 * w, -0.45, 0.8 * w); s.quadraticCurveTo(-0.3, 0.35 * w, -0.4, 0);
+        s.quadraticCurveTo(-0.3, -0.35 * w, -0.45, -0.8 * w); s.quadraticCurveTo(-0.15, -0.35 * w, 0.1, 0); }, material, 0.04);
+      f.rotation.x = Math.PI / 2; pv.add(f); return pv;
+    }
+
+    /* --- 表層：ザトウクジラ（光を背に、頭上を巨大な影が通り過ぎる。長い胸びれが特徴） --- */
+    {
+      const g = new THREE.Group(), M = mat(0);
+      const body = new THREE.Mesh(bodyAlongX([[0,-1.6],[0.06,-1.45],[0.13,-1.1],[0.3,-0.4],[0.37,0.15],[0.36,0.6],[0.3,1.0],[0.18,1.38],[0,1.6]], 0.95, 40), M);
+      const pec = s => { const pv = new THREE.Group(); pv.position.set(0.55, -0.12, 0.3 * s);
+        const f = fin(sh => { sh.moveTo(-0.1, 0); sh.quadraticCurveTo(-0.25, 0.6, -0.55, 1.25); sh.quadraticCurveTo(-0.3, 0.8, 0.12, 0); sh.lineTo(-0.1, 0); }, M, 0.04);
+        f.rotation.x = s * Math.PI / 2; pv.add(f); g.add(pv); return pv; };
+      const pl = pec(1), pr = pec(-1);
+      const tail = fluke(M); tail.position.set(-1.5, 0, 0);
+      g.add(body, tail);
+      /* ほかの生物とぶつからないよう、ずっと奥（z=-2.4）を泳がせ、そのぶん大きくする */
+      g.scale.setScalar(0.85);
+      g.userData.flat = { color: 0x032029, opacity: 0.5, rim: 0.25, rimColor: 0x9ff3e6 };
+      add3('surface', 0.95, g, (t, y) => {
+        const span = aspect * 1.7 + 2.2, u = ((t / 95) + 0.15) % 1;
+        g.position.set(-span + u * 2 * span, (y + 0.35) * 1.6 + Math.sin(t * 0.2) * 0.04, -2.4);
+        const f = Math.sin(t * 0.6);
+        tail.rotation.z = f * 0.25; pl.rotation.x = f * 0.12; pr.rotation.x = -f * 0.12;
+        g.rotation.set(-0.9, 0.15, Math.sin(t * 0.6 + 1) * 0.03);   /* 下から見上げた角度（腹側と広げた胸びれが見える） */
+      });
+    }
+
+    /* --- 表層〜薄明：マンボウ（丸く平たい体。背びれと尻びれを左右にぱたぱた） --- */
+    {
+      const g = new THREE.Group(), M = mat(0);
+      /* 体：横から見た輪郭に厚みと丸みをつける。後ろは尾びれの代わりの、波打つ「舵（かじ）びれ」 */
+      const o = new THREE.Shape();
+      o.moveTo(1.0, 0.03);
+      o.bezierCurveTo(1.0, 0.55, 0.66, 0.88, 0.15, 0.9);
+      o.bezierCurveTo(-0.3, 0.9, -0.55, 0.78, -0.62, 0.6);
+      for (let k = 0; k < 6; k++) { const y0 = 0.6 - k * 0.2, y1 = 0.6 - (k + 1) * 0.2; o.quadraticCurveTo(-0.8, (y0 + y1) / 2, -0.62, y1); }
+      o.bezierCurveTo(-0.55, -0.78, -0.3, -0.9, 0.15, -0.9);
+      o.bezierCurveTo(0.66, -0.88, 1.0, -0.55, 1.0, -0.03);
+      o.lineTo(1.0, 0.03);
+      const bodyGeo = new THREE.ExtrudeGeometry(o, { depth: 0.16, bevelEnabled: true, bevelThickness: 0.14, bevelSize: 0.1, bevelSegments: 6, curveSegments: 24 });
+      bodyGeo.translate(0, 0, -0.08);
+      const body = new THREE.Mesh(bodyGeo, M);
+      /* 背びれ・尻びれ：高く、後ろへ流れる形 */
+      const dor = fin(s => { s.moveTo(0.22, 0); s.quadraticCurveTo(0.12, 0.75, -0.22, 1.15); s.quadraticCurveTo(-0.18, 0.55, -0.3, 0); s.lineTo(0.22, 0); }, M, 0.05); dor.position.set(-0.28, 0.7, 0);
+      const anal = fin(s => { s.moveTo(0.22, 0); s.quadraticCurveTo(0.12, -0.75, -0.22, -1.15); s.quadraticCurveTo(-0.18, -0.55, -0.3, 0); s.lineTo(0.22, 0); }, M, 0.05); anal.position.set(-0.28, -0.7, 0);
+      const pect = fin(s => { s.moveTo(0, 0.08); s.quadraticCurveTo(-0.22, 0.1, -0.2, 0); s.quadraticCurveTo(-0.22, -0.1, 0, -0.08); }, M, 0.03);
+      pect.position.set(0.38, 0.0, 0.2);
+      [-1, 1].forEach(s => { const e = sphere(0.075, M, 12, 8); e.position.set(0.66, 0.22, 0.19 * s); e.userData.flat = OCTO_EYE; g.add(e); });
+      const mouth = sphere(0.05, M, 10, 8); mouth.position.set(1.04, 0, 0); mouth.userData.flat = OCTO_EYE;
+      g.add(body, dor, anal, pect, mouth);
+      g.scale.setScalar(0.2);
+      g.userData.flat = { color: 0x5f7f88, opacity: 0.5, rim: 0.6, rimColor: 0xc8f4ee };
+      add3('twilight', 0.1, g, (t, y) => {
+        g.position.set(aspect * 0.4 + Math.sin(t * 0.1) * 0.12, y + Math.sin(t * 0.4) * 0.04, 0.35);
+        const f = Math.sin(t * 1.4) * 0.5; dor.rotation.x = f; anal.rotation.x = -f;
+        pect.rotation.y = Math.sin(t * 2.2) * 0.4;
+        g.rotation.set(0, Math.PI + 0.25 + Math.sin(t * 0.2) * 0.15, Math.sin(t * 0.3) * 0.06);   /* 左を向き、少しこちらへ */
+      });
+    }
+
+    /* --- 薄明：リュウグウノツカイ（銀色の長いリボン。頭を上にして立ち泳ぎし、赤い背びれが波打つ） --- */
+    {
+      const g = new THREE.Group(), L = 3.2;
+      /* 背びれ専用の塗り：頭のほうは赤く、尾に向かって透明に消えていく。細い筋（ひれのすじ）も入れる */
+      const oarFinMat = new THREE.ShaderMaterial({
+        transparent: true, depthWrite: false, side: THREE.DoubleSide,
+        vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+        fragmentShader: `
+          varying vec2 vUv;
+          void main(){
+            float toHead = smoothstep(0.0, 0.9, vUv.x);          /* 尾（0）→ 頭（1） */
+            float rays = 0.88 + 0.12 * sin(vUv.x * 700.0);        /* ひれのすじ（ごく控えめに） */
+            float edge = 1.0 - vUv.y * 0.6;                       /* 背中から離れるほど薄く */
+            vec3 c = mix(vec3(0.86, 0.33, 0.28), vec3(1.0, 0.62, 0.52), vUv.y);
+            gl_FragColor = vec4(c, 0.55 * toHead * toHead * rays * edge);
+          }`
+      });
+      const bodyGeo = bodyAlongX([[0,-L/2],[0.02,-L/2+0.1],[0.06,-1.2],[0.09,0],[0.1,1.2],[0.085,1.5],[0,L/2]], 0.35, 20);
+      const body = new THREE.Mesh(bodyGeo, mat(0));
+      /* 背びれ：背中のすぐ上に沿う、低く薄い帯 */
+      const finGeo = new THREE.PlaneGeometry(L * 0.92, 0.055, 120, 1); finGeo.translate(-0.05, 0.11, 0);
+      { const p = finGeo.attributes.position;   /* 頭の上だけ、たてがみのように少し高くする */
+        for (let i = 0; i < p.count; i++) { const x = p.getX(i); if (p.getY(i) > 0.11 && x > 1.2) p.setY(i, p.getY(i) + (x - 1.2) * 0.35); } }
+      const finMesh = new THREE.Mesh(finGeo, oarFinMat); finMesh.userData.noDepth = true;
+      const b1 = bender(bodyGeo), b2 = bender(finGeo);
+      g.add(body, finMesh);
+      g.scale.setScalar(0.38);
+      g.userData.flat = { color: 0x9fb4c0, opacity: 0.42, rim: 0.9, rimColor: 0xffffff };
+      add3('twilight', 0.4, g, (t, y) => {
+        const wave = x => [Math.sin(x * 2.6 - t * 1.6) * 0.08 * (1 - (x + L / 2) / L * 0.6), 0];
+        b1(wave); b2(wave);
+        /* 左から右へ、ゆっくり横切る（約110秒で1往路） */
+        const span = aspect + 1.0, u = ((t / 110) + 0.45) % 1;
+        g.position.set(-span + u * 2 * span, y + Math.sin(t * 0.3) * 0.05, -0.6);
+        g.rotation.set(0, -0.3, Math.sin(t * 0.25) * 0.06);   /* 頭を右へ、少しこちら向き */
+      });
+    }
+
+    /* --- 真夜中：マッコウクジラ（四角い頭の巨大な影。ダイオウイカを追って深く潜る） --- */
+    {
+      const g = new THREE.Group(), M = mat(0);
+      const body = new THREE.Mesh(bodyAlongX([[0,-1.8],[0.06,-1.6],[0.15,-1.1],[0.3,-0.4],[0.38,0.3],[0.4,0.9],[0.4,1.35],[0.38,1.55],[0.2,1.64],[0,1.66]], 0.9, 40), M);
+      const jaw = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.07, 1.0, 12), M); jaw.rotation.z = Math.PI / 2; jaw.position.set(1.05, -0.33, 0);
+      [1, -1].forEach(s => { const f = fin(sh => { sh.moveTo(-0.05, 0); sh.quadraticCurveTo(-0.15, 0.25, -0.3, 0.35); sh.quadraticCurveTo(-0.1, 0.15, 0.1, 0); }, M, 0.03);
+        f.rotation.x = s * Math.PI / 2; f.position.set(0.85, -0.22, 0.33 * s); g.add(f); });
+      const tail = fluke(M, 0.85); tail.position.set(-1.72, 0, 0);
+      g.add(body, jaw, tail);
+      /* ダイオウイカより奥（z=-2.2）を泳がせ、交差しないようにする */
+      g.scale.setScalar(0.85);
+      g.userData.flat = { color: 0x46525c, opacity: 0.45, rim: 0.7, rimColor: 0xc9dbe6 };
+      add3('midnight', 0.42, g, (t, y) => {
+        const span = aspect * 1.6 + 2.2, u = ((t / 100) + 0.35) % 1;
+        g.position.set(span - u * 2 * span, y * 1.6 + Math.sin(t * 0.2) * 0.05, -2.2);
+        tail.rotation.z = Math.sin(t * 0.5) * 0.25;
+        g.rotation.set(0.15, Math.PI + 0.3, Math.sin(t * 0.5 + 1) * 0.02);
+      });
+    }
+
+    /* --- 真夜中：ダイオウイカ（長い腕と触腕が闇にゆらめく） --- */
+    {
+      const g = new THREE.Group(), M = mat(0);
+      const mantle = new THREE.Mesh(bodyAlongX([[0,-0.1],[0.2,0.0],[0.26,0.4],[0.24,0.9],[0.15,1.3],[0,1.5]], 1, 28), M);
+      const finS = fin(s => { s.moveTo(0, 0); s.lineTo(-0.3, 0.32); s.lineTo(-0.55, 0); s.lineTo(-0.3, -0.32); s.lineTo(0, 0); }, M, 0.02);
+      finS.rotation.x = Math.PI / 2; finS.position.set(1.5, 0, 0);
+      const head = sphere(0.2, M, 20, 14); head.scale.set(1.2, 1, 1); head.position.set(-0.12, 0, 0);
+      [-1, 1].forEach(s => { const e = sphere(0.075, M, 12, 8); e.position.set(-0.1, 0.05, 0.2 * s); e.userData.flat = OCTO_EYE; g.add(e); });
+      const arms = [...Array(10)].map((_, i) => {
+        const long = i >= 8, L = long ? 2.8 : 1.4, ang = long ? (i === 8 ? 0.5 : -0.5) : (i / 8) * Math.PI * 2;
+        const geo = bodyAlongX([[0,-L],[0.012,-L+0.05],[long ? 0.03 : 0.045,-0.3],[0.055,0]], 1, 8);
+        const m = new THREE.Mesh(geo, M);
+        m.position.set(-0.28, Math.sin(ang) * 0.08, Math.cos(ang) * 0.08);
+        m.rotation.set(0, -Math.cos(ang) * 0.12, Math.sin(ang) * 0.12);
+        g.add(m);
+        return { b: bender(geo), L, ang, ph: i * 0.7 };
+      });
+      g.add(mantle, finS, head);
+      g.scale.setScalar(0.32);
+      g.userData.flat = { color: 0x8a3a36, opacity: 0.45, rim: 0.8, rimColor: 0xffb0a0 };
+      add3('midnight', 0.66, g, (t, y) => {
+        arms.forEach(a => a.b(x => { const k = -x / a.L, w = Math.sin(x * 3 + t * 1.5 + a.ph) * 0.14 * k; return [w * Math.cos(a.ang), w * Math.sin(a.ang)]; }));
+        g.position.set(aspect * 0.34 + Math.sin(t * 0.12) * 0.08, y * 0.92 + Math.sin(t * 0.5) * 0.05, 0.3);
+        const pulse = Math.sin(t * 0.8); mantle.scale.set(1, 1 + pulse * 0.04, 1 + pulse * 0.04);
+        g.rotation.set(0.3, -0.4, 0.5 + Math.sin(t * 0.3) * 0.1);
+      });
+    }
+
+    /* --- 深淵：ダイオウクラゲ（暗い赤の大きな傘から、リボンのような長い腕が4本たなびく。水深6000m付近でも見つかっている） --- */
+    {
+      const g = new THREE.Group(), M = mat(0);
+      /* 傘：ゆるいドーム形。ふちを少し波打たせる */
+      const bellPts = [[0.001,0.62],[0.4,0.58],[0.75,0.42],[0.98,0.16],[1.04,-0.02],[0.96,-0.08],[0.6,0.08],[0.001,0.14]]
+        .map(([r, h]) => new THREE.Vector2(r, h));
+      const bellGeo = new THREE.LatheGeometry(new THREE.SplineCurve(bellPts).getPoints(40).map(v => new THREE.Vector2(Math.max(v.x, 0.0005), v.y)), 64);
+      { const p = bellGeo.attributes.position;
+        for (let i = 0; i < p.count; i++) { const x = p.getX(i), z = p.getZ(i), r = Math.hypot(x, z);
+          if (r > 0.85) p.setY(i, p.getY(i) + Math.sin(Math.atan2(z, x) * 12) * 0.025 * (r - 0.85) / 0.2); } }
+      bellGeo.computeVertexNormals();
+      const bell = new THREE.Mesh(bellGeo, M);
+      /* 腕：長い帯を4本。根元から先へ、ゆっくり波が伝わる */
+      const ARM = { color: 0x8e2a34, opacity: 0.4, rim: 0, side: THREE.DoubleSide };
+      const arms = [...Array(4)].map((_, k) => {
+        const geo = new THREE.PlaneGeometry(3.4, 0.26, 70, 1); geo.translate(-1.7, 0, 0);
+        { const p = geo.attributes.position;   /* 先へ行くほど細く */
+          for (let i = 0; i < p.count; i++) p.setY(i, p.getY(i) * (1 + p.getX(i) / 3.4 * 0.75)); }
+        const m = new THREE.Mesh(geo, M); m.userData.flat = ARM; m.userData.noDepth = true;
+        m.rotation.z = Math.PI / 2;   /* 帯を下向きに垂らす */
+        const pv = new THREE.Group(); pv.rotation.y = k / 4 * Math.PI * 2 + 0.4; pv.position.y = 0.05;
+        m.position.x = 0.22; pv.add(m); g.add(pv);
+        return { b: bender(geo), ph: k * 1.7 };
+      });
+      g.add(bell);
+      g.scale.setScalar(0.24);
+      g.userData.flat = { color: 0x7a1f2a, opacity: 0.5, rim: 0.85, rimColor: 0xff9a9a };
+      add3('abyss', 0.32, g, (t, y) => {
+        const pulse = Math.sin(t * 0.9);
+        bell.scale.set(1 + pulse * 0.05, 1 - pulse * 0.08, 1 + pulse * 0.05);   /* 傘をゆっくり脈打たせる */
+        arms.forEach(a => a.b(x => { const k = -x / 3.4; return [Math.sin(x * 1.8 + t * 0.8 + a.ph) * 0.25 * k, Math.cos(x * 1.3 + t * 0.6 + a.ph) * 0.18 * k]; }));
+        g.position.set(aspect * 0.62 + Math.sin(t * 0.06) * 0.1, y + 0.35 + Math.sin(t * 0.25) * 0.06, -0.5);   /* プランの表と重ならない右側 */
+        g.rotation.set(0.25, t * 0.05, Math.sin(t * 0.2) * 0.08);
+      });
+    }
+
+    /* --- 深淵：シンカイクサウオ（ゼリーのように透ける細長い魚。伊豆・小笠原海溝の水深8000m付近でも撮影されている）
+       頭から尾へなだらかに細くなる体、体の途中から尾の先まで続く背びれ・尻びれの膜、頭の後ろの大きな丸い胸びれ --- */
+    {
+      /* ひれ専用の塗り：ごく薄い膜に、細いすじ（ひれのすじ）が透けて見える */
+      const finRayMat = new THREE.ShaderMaterial({
+        transparent: true, depthWrite: false, side: THREE.DoubleSide,
+        vertexShader: `varying vec3 vP; void main(){ vP = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+        fragmentShader: `
+          varying vec3 vP;
+          void main(){
+            float rays = smoothstep(0.85, 1.0, sin(vP.x * 70.0 + vP.y * 6.0) * 0.5 + 0.5);   /* ひれのすじ（細く、ごく控えめに） */
+            gl_FragColor = vec4(vec3(0.95, 0.9, 0.92), 0.08 + rays * 0.05);
+          }`
+      });
+      const pectRayMat = finRayMat.clone();
+      pectRayMat.fragmentShader = finRayMat.fragmentShader.replace('vP.x * 48.0 + vP.y * 6.0', 'atan(vP.y, vP.x + 0.02) * 22.0');   /* 胸びれは放射状のすじ */
+
+      /* 3匹の位置（体の長さ約2.7に対して、ぶつからないよう前後・上下・奥行きを十分に離す） */
+      const school = [[0, 0, 0, 0], [-3.4, 1.4, -1.8, 1.3], [3.3, -1.3, 1.6, 2.6]].map(([dx, dy, dz, ph]) => {
+        const g = new THREE.Group(), M = mat(0);
+        const bodyGeo = bodyAlongX([[0,-1.6],[0.02,-1.45],[0.06,-0.95],[0.12,-0.35],[0.18,0.15],[0.22,0.55],[0.21,0.82],[0.13,1.0],[0,1.08]], 0.72, 28);
+        const body = new THREE.Mesh(bodyGeo, M);
+        /* 背びれ・尾びれ・尻びれが一続きになった膜（体の途中から尾の先まで） */
+        const finGeo = new THREE.ExtrudeGeometry((() => { const s = new THREE.Shape();
+          s.moveTo(0.4, 0.16); s.bezierCurveTo(-0.2, 0.36, -1.1, 0.24, -1.72, 0); s.bezierCurveTo(-1.1, -0.22, -0.3, -0.3, 0.2, -0.15); s.lineTo(0.4, 0.16); return s; })(),
+          { depth: 0.008, bevelEnabled: false, curveSegments: 32 });
+        finGeo.translate(0, 0, -0.004);
+        const finM = new THREE.Mesh(finGeo, finRayMat); finM.userData.noDepth = true;
+        /* 大きな丸い胸びれ（左右）。ゆっくり羽ばたく */
+        const pects = [-1, 1].map(s => {
+          const pv = new THREE.Group(); pv.position.set(0.5, -0.06, 0.15 * s);
+          const f = new THREE.Mesh(new THREE.ShapeGeometry((() => { const sh = new THREE.Shape();
+            sh.moveTo(0, 0.06); sh.quadraticCurveTo(-0.12, 0.38, -0.45, 0.3); sh.quadraticCurveTo(-0.62, 0.02, -0.42, -0.26); sh.quadraticCurveTo(-0.14, -0.32, 0, -0.06); sh.lineTo(0, 0.06); return sh; })(), 20), pectRayMat);
+          f.userData.noDepth = true; f.rotation.y = -0.6 * s;
+          pv.add(f); g.add(pv); return pv;
+        });
+        [-1, 1].forEach(s => { const e = sphere(0.045, M, 10, 8); e.position.set(0.8, 0.07, 0.13 * s); e.userData.flat = OCTO_EYE; g.add(e); });
+        g.add(body, finM);
+        return { g, dx, dy, dz, ph, pects, b1: bender(bodyGeo), b2: bender(finGeo) };
+      });
+      const root = new THREE.Group();
+      school.forEach(f => root.add(f.g));
+      root.scale.setScalar(0.16);
+      root.userData.flat = { color: 0xf0e4e8, opacity: 0.3, rim: 1.0, rimColor: 0xffffff };   /* ゼリーのように透け、ふちだけ光る */
+      add3('abyss', 0.9, root, (t, y) => {   /* 安全の文章より下を泳がせる */
+        const span = aspect + 0.9, u = ((t / 85) + 0.4) % 1;
+        root.position.set(span - u * 2 * span, y + Math.sin(t * 0.3) * 0.04, 0.2);
+        root.rotation.set(0.1, Math.PI + 0.35, 0);   /* 左へ泳ぎ、少しこちらを向く */
+        school.forEach(f => {
+          f.g.position.set(f.dx + Math.sin(t * 0.4 + f.ph) * 0.25, f.dy + Math.cos(t * 0.5 + f.ph) * 0.2, f.dz);
+          const w = x => [0, Math.sin(x * 2.0 + t * 1.8 + f.ph) * 0.12 * Math.max(0, -x + 0.3) / 1.9];   /* 尾をゆったりくねらせて泳ぐ */
+          f.b1(w); f.b2(w);
+          f.pects.forEach((p, i) => p.rotation.x = Math.sin(t * 1.2 + f.ph + i * Math.PI) * 0.35);   /* 胸びれの羽ばたき */
+        });
+      });
+    }
+
+    /* --- 6000m：海底と、そこに暮らす生物 ---
+       海底の起伏は式で作り、生物の足をその高さに合わせて置く */
+    {
+      const floorH = (x, z) => 0.1 * Math.sin(x * 1.1 + 0.5) * Math.cos(z * 0.8) + 0.05 * Math.sin(x * 2.7 + z * 1.9) + 0.03 * Math.sin(x * 6.1 - z * 4.3);
+      const FLOOR = { color: 0x0b171c, opacity: 1, rim: 0.35, rimColor: 0x3f7f7a };
+      const g = new THREE.Group();
+      /* 手前の端が画面の下に来ないよう、カメラのすぐ前まで広げる */
+      const geo = new THREE.PlaneGeometry(14, 8.4, small ? 90 : 160, small ? 50 : 90);
+      geo.rotateX(-Math.PI / 2); geo.translate(0, 0, -0.9);
+      { const p = geo.attributes.position; for (let i = 0; i < p.count; i++) p.setY(i, floorH(p.getX(i), p.getZ(i))); }
+      geo.computeVertexNormals();
+      /* 海底専用の塗り：起伏のふちがうっすら光り、提灯の真下だけが丸く照らされる。奥ほど闇に沈む */
+      const floorMat = new THREE.ShaderMaterial({
+        uniforms: { uLure: { value: lureWorld } },
+        vertexShader: `
+          varying vec3 vW; varying vec3 vN; varying vec3 vV;
+          void main(){
+            vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz;
+            vec4 mv = viewMatrix * w; vN = normalize(normalMatrix * normal); vV = normalize(-mv.xyz);
+            gl_Position = projectionMatrix * mv;
+          }`,
+        fragmentShader: `
+          uniform vec3 uLure; varying vec3 vW; varying vec3 vN; varying vec3 vV;
+          void main(){
+            float rim = pow(1.0 - abs(dot(normalize(vN), normalize(vV))), 3.0) * 0.22;
+            vec2 d = vW.xz - uLure.xz;
+            float pool = exp(-dot(d, d) * 2.6);                       /* 提灯の光だまり */
+            vec3 c = vec3(0.016, 0.034, 0.044) + vec3(0.25, 0.62, 0.6) * rim + vec3(0.55, 0.95, 0.88) * pool * 0.16;
+            c *= mix(0.3, 1.0, smoothstep(-6.0, -0.5, vW.z));         /* 奥ほど暗く */
+            gl_FragColor = vec4(c, 1.0);
+          }`
+      });
+      const floor = new THREE.Mesh(geo, floorMat);
+      g.add(floor);
+
+      /* 光る線で描く生物の材料（ガラスのような繊細さを出すため、面ではなく線で描く） */
+      const lineMat = (color, opacity) => new THREE.LineBasicMaterial({ color, transparent: true, opacity, blending: THREE.AdditiveBlending, depthWrite: false });
+      const lines = segs => { const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(segs, 3)); return geo; };
+
+      /* カイロウドウケツ：ガラスの繊維が網目に編まれた、花瓶の形の海綿 */
+      const sponge = new THREE.Group();
+      {
+        const H = 1.3, N = 18, R = h => 0.16 + 0.06 * Math.sin(h * 2.4) + 0.12 * Math.pow(h / H, 3);   /* 上が広がる花瓶形 */
+        const P = (h, a) => [Math.cos(a) * R(h), h, Math.sin(a) * R(h)];
+        const s = [];
+        for (let k = 0; k < N; k++) for (let j = 0; j < 26; j++) {   /* 縦の繊維と、ななめに交差する繊維 */
+          const h0 = j / 26 * H, h1 = (j + 1) / 26 * H, a = k / N * Math.PI * 2;
+          s.push(...P(h0, a), ...P(h1, a));
+          s.push(...P(h0, a + j * 0.06), ...P(h1, a + (j + 1) * 0.06));
+          s.push(...P(h0, a - j * 0.06), ...P(h1, a - (j + 1) * 0.06));
+        }
+        for (let j = 0; j <= 13; j++) for (let k = 0; k < N * 2; k++) {   /* 横の輪 */
+          const h = j / 13 * H, a0 = k / (N * 2) * Math.PI * 2, a1 = (k + 1) / (N * 2) * Math.PI * 2;
+          s.push(...P(h, a0), ...P(h, a1));
+        }
+        sponge.add(new THREE.LineSegments(lines(s), lineMat(0x9ff3e6, 0.13)));
+        const shell = new THREE.Mesh(new THREE.LatheGeometry([...Array(20)].map((_, j) => new THREE.Vector2(R(j / 19 * H), j / 19 * H)), 40), mat(0));
+        shell.userData.flat = { color: 0xbfe9e3, opacity: 0.08, rim: 0.9, rimColor: 0xd8fff8, side: THREE.DoubleSide };
+        shell.userData.noDepth = true;
+        sponge.add(shell);
+      }
+      sponge.scale.setScalar(0.42);
+      { const x = -aspect * 0.5, z = -1.6; sponge.position.set(x, floorH(x, z) - 0.02, z); }   /* アンコウの左奥 */
+      g.add(sponge);
+
+      /* ウミユリ：長い茎の先に、羽のような腕を花のように広げる（植物に見えるが動物） */
+      const lilies = [];
+      const makeLily = (H, color) => {
+        const lily = new THREE.Group(), s = [];
+        for (let j = 0; j < 30; j++) { const y0 = j / 30 * H, y1 = (j + 1) / 30 * H;   /* 茎：少し曲がった線を3本重ねて太さを出す */
+          for (const o of [-0.006, 0, 0.006]) s.push(Math.sin(y0 * 2) * 0.05 + o, y0, 0, Math.sin(y1 * 2) * 0.05 + o, y1, 0); }
+        const top = [Math.sin(H * 2) * 0.05, H, 0];
+        for (let a = 0; a < 10; a++) {   /* 腕10本：外へ広がって先が内側へ巻く。両側に細かい羽枝（うし） */
+          const ang = a / 10 * Math.PI * 2;
+          let prev = top;
+          for (let j = 1; j <= 14; j++) {
+            const u = j / 14, r = Math.sin(u * 2.4) * 0.32, up = u * 0.34 - u * u * 0.22;
+            const p = [top[0] + Math.cos(ang) * r, H + up, Math.sin(ang) * r];
+            s.push(...prev, ...p);
+            const side = [-Math.sin(ang), 0, Math.cos(ang)], len = 0.06 * (1 - u * 0.6);
+            for (const d of [-1, 1]) s.push(...p, p[0] + side[0] * len * d, p[1] - len * 0.6, p[2] + side[2] * len * d);
+            prev = p;
+          }
+        }
+        lily.add(new THREE.LineSegments(lines(s), lineMat(color, 0.55)));
+        return lily;
+      };
+      /* アンコウの真下には置かない（茎がアンコウの脚に見えるため）。右奥と左奥に群生させる */
+      [[aspect * 0.88, -1.8, 1.1, 0xffc2a8, 0.0], [aspect * 1.05, -2.4, 1.3, 0xffd9c6, 1.7], [aspect * 1.15, -1.3, 0.85, 0xffb39a, 3.1],
+       [-aspect * 0.7, -2.0, 1.0, 0xffcdb5, 4.4]].forEach(([x, z, H, c, ph]) => {
+        const l = makeLily(H, c); l.position.set(x, floorH(x, z), z); l.scale.setScalar(0.5); g.add(l); lilies.push({ l, ph });
+      });
+
+      /* クモヒトデ：小さな円盤から細い腕を5本のばし、腕をくねらせて海底を這う */
+      const stars = [];
+      const STAR = { color: 0xd9a07a, opacity: 0.6, rim: 0.7, rimColor: 0xffe2c8 };
+      [[-aspect * 0.15, 0.9, 0.0], [aspect * 0.12, 1.25, 1.3], [-aspect * 0.85, 0.75, 2.2], [aspect * 0.95, 1.0, 0.7]].forEach(([x, z, rot]) => {
+        const st = new THREE.Group(), SM = mat(0);
+        const disc = sphere(0.12, SM, 16, 10); disc.scale.set(1, 0.35, 1); disc.position.y = 0.03;
+        st.add(disc);
+        const arms = [...Array(5)].map((_, k) => {
+          const geo = bodyAlongX([[0.04,0],[0.03,0.3],[0.015,0.6],[0,0.75]], 0.6, 6);
+          const m = new THREE.Mesh(geo, SM); m.rotation.y = k / 5 * Math.PI * 2; m.position.y = 0.02;
+          st.add(m); return { b: bender(geo), ph: k * 1.3 + rot };
+        });
+        st.traverse(o => { if (o.isMesh) o.userData.flat = STAR; });
+        st.position.set(x, floorH(x, z) + 0.005, z); st.rotation.y = rot; st.scale.setScalar(0.2);
+        g.add(st); stars.push({ arms });
+      });
+
+      g.userData.flat = FLOOR;
+      add3(anglerBox, 1.0, g, (t, y) => {
+        g.position.set(0, y - 0.32, 0);   /* アンコウの体が海底にめり込まないよう、少し下げる */
+        lilies.forEach(({ l, ph }) => { l.rotation.z = Math.sin(t * 0.5 + ph) * 0.05; l.rotation.x = Math.sin(t * 0.37 + ph) * 0.04; });   /* 流れにゆれる */
+        stars.forEach(s => s.arms.forEach(a => a.b(x => [0, Math.sin(x * 6 - t * 1.6 + a.ph) * 0.05 * x])));   /* 腕をくねらせる */
+      });
+    }
+
+    /* ============ ぺらっと仕上げ（イワシ・サクラエビと同じ質感にそろえる） ============
+       ・陰影をつけず、1色の半透明な「切り絵」のように塗る。ふちだけ水の光がうっすら回り込む
+       ・形と動きは3Dのまま。重なった部分が濃くならないよう、
+         先に「一番手前の面」だけを記録してから（奥行きだけの下塗り）、その面だけに色を1回塗る */
+    const depthOnly = new THREE.MeshBasicMaterial({ colorWrite: false });
+    const flatMat = ({ color, opacity = 0.6, rim = 0.4, rimColor = 0x9ff3e6, side = THREE.FrontSide }) => new THREE.ShaderMaterial({
+      transparent: true, depthWrite: false, depthFunc: THREE.LessEqualDepth, side,
+      uniforms: { uColor: { value: new THREE.Color(color) }, uOpacity: { value: opacity }, uRim: { value: rim }, uRimColor: { value: new THREE.Color(rimColor) } },
+      vertexShader: `
+        varying vec3 vN; varying vec3 vV;
+        void main(){
+          vec4 mv = modelViewMatrix * vec4(position, 1.0);
+          vN = normalize(normalMatrix * normal); vV = normalize(-mv.xyz);
+          gl_Position = projectionMatrix * mv;
+        }`,
+      fragmentShader: `
+        uniform vec3 uColor; uniform float uOpacity; uniform float uRim; uniform vec3 uRimColor;
+        varying vec3 vN; varying vec3 vV;
+        void main(){
+          float rim = pow(1.0 - abs(dot(normalize(vN), normalize(vV))), 3.0) * uRim;   /* ふちの光 */
+          gl_FragColor = vec4(mix(uColor, uRimColor, rim), mix(uOpacity, 1.0, rim * 0.5));
+        }`
+    });
+    creatures.forEach(c => {
+      const base = c.obj.userData.flat;
+      if (!base) return;
+      const baseMat = flatMat(base), cache = new Map(), list = [];
+      c.obj.traverse(o => { if (o.isMesh && !o.userData.keep && !o.material.isMeshBasicMaterial && !o.material.isShaderMaterial) list.push(o); });
+      list.forEach(o => {
+        const spec = o.userData.flat;
+        if (spec && !cache.has(spec)) cache.set(spec, flatMat({ ...base, ...spec }));
+        o.material = spec ? cache.get(spec) : baseMat;
+        if (!o.userData.noDepth) o.add(new THREE.Mesh(o.geometry, depthOnly));
+      });
+    });
+
+    /* ============ サイズ・マウス・スクロール ============ */
+    function layout() {
+      const w = innerWidth, h = innerHeight; vh = h; aspect = w / h;
+      renderer.setSize(w, h, false);
+      seaMat.uniforms.uRes.value.set(w, h);
+      camera.left = -aspect; camera.right = aspect; camera.updateProjectionMatrix();
+      cam3.aspect = aspect; cam3.updateProjectionMatrix();
+      /* ページの一番上からの位置で測る（入れ子の要素でもずれないように） */
+      creatures.forEach(c => { c.anchor = c.sec.getBoundingClientRect().top + scrollY + c.sec.offsetHeight * c.frac; });
+    }
+    addEventListener('resize', layout); addEventListener('load', layout); layout();
+
+    const target = new THREE.Vector2();
+    addEventListener('pointermove', e => { target.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight * 2 - 1)); }, { passive: true });
+
+    const clock = new THREE.Clock();
+    function frame() {
+      const t = clock.getElapsedTime() + 10.0;
+      uTime.value = t;
+      uScroll.value = scrollY / (vh / 2);
+      seaMat.uniforms.uMouse.value.lerp(target, 0.03);
+      const D = window.diveDepth || 0;
+      seaMat.uniforms.uDepth.value = D;
+
+      /* 深さに応じた光：浅いところは太陽、深いところは潜水艇のライトだけ */
+      const light = Math.exp(-D / 260);
+      hemi.intensity = 0.05 + 1.6 * light;
+      sun.intensity = 2.6 * light;
+      subLight.intensity = 3.4 * THREE.MathUtils.smoothstep(D, 150, 800) * (1 - 0.85 * THREE.MathUtils.smoothstep(D, 4800, 5800));
+      scene3.fog.color.copy(fogTwilight).lerp(fogNight, THREE.MathUtils.smoothstep(D, 250, 1400)).lerp(fogShallow, light);
+
+      anglerOn = false;
+      for (const c of creatures) {
+        const y = -((c.anchor - (scrollY + vh / 2)) / (vh / 2));
+        if (Math.abs(y) > 2.4) { c.obj.visible = false; continue; }
+        c.obj.visible = true; c.update(t, y);
+      }
+      lureBtn.classList.toggle('is-on', anglerOn);
+
+      renderer.clear();
+      renderer.render(scene, camera);
+      renderer.clearDepth();
+      renderer.render(scene3, cam3);
+    }
+
+    /* タブが裏にあるときは描画を止める（電池とCPUを使わない） */
+    let running = false;
+    function loop() {
+      if (running || reduce) return;
+      running = true;
+      (function tick() {
+        if (document.hidden) { running = false; return; }
+        frame(); requestAnimationFrame(tick);
+      })();
+    }
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) loop(); });
+
+    frame();
+    canvas.classList.add('is-ready');
+    if (reduce) addEventListener('scroll', frame, { passive: true });
+    else loop();
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,827 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>まばたき（デモ版）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root { --ink:#e9e4d8; --dim:#8b857a; --amber:#f2a640; --bg:#000; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html, body { height:100%; background:var(--bg); color:var(--ink); overflow:hidden;
+    font-family:"Zen Kaku Gothic New", sans-serif; }
+  canvas { display:block; }
+
+  /* HUD */
+  #hud { position:fixed; inset:0; pointer-events:none; }
+  #san { position:absolute; left:28px; bottom:26px; width:min(260px, 50vw); }
+  #san .label { font-size:11px; letter-spacing:.3em; color:var(--dim); margin-bottom:6px; }
+  #san .bar { height:3px; background:rgba(233,228,216,.12); position:relative; overflow:hidden; }
+  #san .fill { position:absolute; inset:0 auto 0 0; width:100%; background:var(--ink); transition:width .25s ease-out; }
+  #san.hit { animation:shake .35s; }
+  #san.low .fill { background:#c4483a; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)} 40%{transform:translateX(5px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(2px)} }
+  #time { position:absolute; right:28px; top:24px; font-family:"Shippori Mincho", serif; font-size:15px; letter-spacing:.15em; color:var(--dim); font-variant-numeric:tabular-nums; }
+  #state { position:absolute; left:50%; bottom:28px; transform:translateX(-50%); font-size:11px; letter-spacing:.35em; color:var(--dim); }
+
+  /* 画面 */
+  .screen { position:fixed; inset:0; display:none; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; background:rgba(0,0,0,.82); padding:24px; cursor:pointer; }
+  .screen.on { display:flex; }
+  .title { font-family:"Shippori Mincho", serif; font-weight:700; font-size:clamp(44px, 9vw, 88px); letter-spacing:.35em; padding-left:.35em; }
+  .lead { font-family:"Shippori Mincho", serif; font-size:15px; line-height:2.2; margin-top:28px; color:var(--ink); }
+  .keys { margin-top:30px; font-size:12px; line-height:2; color:var(--dim); letter-spacing:.08em; }
+  .keys b { color:var(--ink); font-weight:500; display:inline-block; min-width:9em; text-align:right; margin-right:1.2em; }
+  .go { margin-top:40px; font-size:12px; letter-spacing:.4em; color:var(--amber); animation:blink 2.4s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.25} }
+  .big { font-family:"Shippori Mincho", serif; font-weight:700; font-size:clamp(40px, 8vw, 72px); letter-spacing:.3em; padding-left:.3em; }
+  .sub { margin-top:18px; font-family:"Shippori Mincho", serif; font-size:16px; letter-spacing:.2em; color:var(--dim); }
+  .tag { position:fixed; left:16px; top:14px; font-size:10px; letter-spacing:.3em; color:#555; }
+  .copy { position:fixed; right:16px; bottom:10px; font-size:10px; color:#444; letter-spacing:.1em; }
+
+  /* スマホ */
+  body { touch-action:none; -webkit-user-select:none; user-select:none; }
+  .sp { display:none; }
+  body.touch .sp { display:block; } body.touch span.sp { display:inline; }
+  body.touch .pc { display:none; }
+  #stick { position:fixed; width:110px; height:110px; margin:-55px 0 0 -55px; border-radius:50%;
+    border:1px solid rgba(233,228,216,.25); display:none; pointer-events:none; }
+  #stick.on { display:block; }
+  #knob { position:absolute; left:50%; top:50%; width:44px; height:44px; margin:-22px 0 0 -22px; border-radius:50%; background:rgba(233,228,216,.25); }
+  #eye-btn { position:fixed; right:22px; bottom:70px; width:84px; height:84px; border-radius:50%; display:none;
+    align-items:center; justify-content:center; text-align:center; font-size:12px; line-height:1.4; letter-spacing:.1em;
+    color:var(--ink); border:1px solid rgba(233,228,216,.4); background:rgba(0,0,0,.35); pointer-events:auto; }
+  #eye-btn.on { background:rgba(242,166,64,.35); border-color:var(--amber); }
+  body.touch.playing #eye-btn { display:flex; }
+  body.touch #san { bottom:22px; }
+  body.touch #state { bottom:auto; top:24px; }
+</style>
+</head>
+<body>
+<div id="hud">
+  <div id="time">00:00.00</div>
+  <div id="state"></div>
+  <div id="san"><div class="label">SAN</div><div class="bar"><div class="fill"></div></div></div>
+</div>
+<div id="stick"><div id="knob"></div></div>
+<div id="eye-btn">目を<br>開ける</div>
+
+<div class="screen on" id="scr-title">
+  <div class="title">まばたき</div>
+  <p class="lead">目を閉じているあいだだけ、歩ける。<br>目を開けると、光の色がわかる。<br>本物のお守りの光を、探して。</p>
+  <div class="keys pc">
+    <div><b>ふだん</b>目を閉じている</div>
+    <div><b>スペース長押し</b>目を開ける（足が止まる）</div>
+    <div><b>W A S D</b>歩く（目を閉じているときだけ）</div>
+    <div><b>マウス</b>見回す</div>
+    <div><b>M</b>音のオン・オフ</div>
+  </div>
+  <div class="keys sp">
+    <div><b>ふだん</b>目を閉じている</div>
+    <div><b>右下のボタン</b>押している間、目を開ける</div>
+    <div><b>左半分をなぞる</b>歩く</div>
+    <div><b>右半分をなぞる</b>見回す</div>
+  </div>
+  <div class="go"><span class="pc">クリック</span><span class="sp">タップ</span>ではじめる（音が出ます）</div>
+</div>
+<div class="screen" id="scr-pause"><div class="big">一時停止</div><div class="go">クリックでつづける</div></div>
+<div class="screen" id="scr-clear"><div class="big">みつけた</div><div class="sub" id="clear-time"></div><div class="go">クリックでもう一度</div></div>
+<div class="screen" id="scr-over"><div class="big">夢に、のまれた。</div><div class="sub">SAN値が尽きました</div><div class="go">クリックでもう一度</div></div>
+<div class="tag">DEMO</div>
+<div class="copy">© 2026 mae.exe 無断転載禁止</div>
+
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
+</script>
+<script type="module">
+import * as THREE from 'three';
+
+/* ---------- 調整用の数値（作りながら調整） ---------- */
+const CFG = {
+  walkSpeed: 2.2,        // 歩く速さ（m/秒）
+  openDrain: 2.5,        // 目を開けている間に減るSAN（/秒）
+  regen: 0.6,            // 目を閉じている間に回復するSAN（/秒）
+  regenDelay: 3.0,       // ダメージ後、回復が始まるまで（秒）
+  touchDamage: 30,       // 罠に触れたとき
+  openNearDamage: 25,    // 罠の近くで目を開けたとき
+  openNearRadius: 3.0,   // 「罠の近く」の範囲（m）
+  touchRadius: 0.75,     // 触れたとみなす距離（m）
+  trapCooldown: 6.0,     // 触れた罠が消えている時間（秒）
+  glareTime: 2.0,       // 目を開けてから、まぶしさが引くまで（秒）
+};
+const isTouch = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window; // スマホ・タブレット
+if (isTouch) document.body.classList.add('touch');
+const REAL_COLOR = 0xffb040;                                  // 本物のお守り（琥珀色）
+const TRAP_COLORS = [0xff5a3c, 0xfff0a8, 0x86d2ff, 0xb6ff8c]; // 罠（色違い）
+
+/* ---------- 間取り（# 壁 / . 床 / d 出入口 / S 開始 / O 本物 / T 罠 / M 動く罠） ---------- */
+const MAP = [
+  '######################',
+  '#S....#......#.......#',
+  '#.....d......d...T...#',
+  '#..T..#......#.......#',
+  '###d######d###...M...#',
+  '#........#...#.......#',
+  '#..M.....d...###d#####',
+  '#........#...#.......#',
+  '#####d####.T.d...T...#',
+  '#....#...#...#.......#',
+  '#.T..d...#####d#######',
+  '#....#...............#',
+  '#....#.M.....T.......#',
+  '##d###...............#',
+  '#..........T.....#..O#',
+  '######################',
+];
+const CS = 2, WH = 2.7, EYE = 1.5;
+const cell = (x, z) => (MAP[Math.floor(z / CS)] || '')[Math.floor(x / CS)] || '#';
+
+/* ---------- 描画の準備 ---------- */
+const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
+renderer.setPixelRatio(isTouch ? 1 : Math.min(devicePixelRatio, 1.5)); // スマホは軽くする
+renderer.setSize(innerWidth, innerHeight);
+document.body.prepend(renderer.domElement);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, 0.05, 60);
+camera.rotation.order = 'YXZ';
+
+const fogOpen = new THREE.Fog(0x04050a, 3, 16);
+const fogClosed = new THREE.Fog(0x000000, 1.0, 9);
+scene.fog = fogOpen;
+scene.add(new THREE.AmbientLight(0x6a76a8, 0.12));
+scene.add(new THREE.HemisphereLight(0x4a5880, 0x1a120a, 0.1));
+
+const solid = [];   // 目を閉じると黒くなる面
+const lines = [];   // 目を閉じると見える輪郭線
+const blackMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+const lineMat = new THREE.LineBasicMaterial({ color: 0x5c5c5c });
+const tatamiLineMat = new THREE.LineBasicMaterial({ color: 0x2c2c2c });
+
+const edgeCache = new Map();
+function addSolid(geo, mat, x, y, z, rotY = 0, extraLines = null) {
+  const m = new THREE.Mesh(geo, mat);
+  m.position.set(x, y, z); m.rotation.y = rotY;
+  m.userData.mat = mat;
+  scene.add(m); solid.push(m);
+  if (!edgeCache.has(geo)) edgeCache.set(geo, new THREE.EdgesGeometry(geo));
+  for (const lg of [edgeCache.get(geo), extraLines]) {
+    if (!lg) continue;
+    const l = new THREE.LineSegments(lg, lineMat);
+    l.position.copy(m.position); l.rotation.y = rotY; l.visible = false;
+    scene.add(l); lines.push(l);
+  }
+  return m;
+}
+
+const W = MAP[0].length, H = MAP.length;
+const isWall = (c, r) => ((MAP[r] || '')[c] || '#') === '#';
+const isEdge = (c, r) => r <= 0 || c <= 0 || r >= H - 1 || c >= W - 1;
+
+/* ---------- 質感（画像） ---------- */
+const loader = new THREE.TextureLoader();
+const aniso = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+function tex(file, rx = 1, ry = 1, mirror = false) {
+  const t = loader.load('img/' + file);
+  t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = aniso;
+  t.wrapS = t.wrapT = mirror ? THREE.MirroredRepeatWrapping : THREE.RepeatWrapping;
+  t.repeat.set(rx, ry); return t;
+}
+const wallMat = new THREE.MeshLambertMaterial({ map: tex('tex_tsuchikabe.jpg', 1, 1.35) });
+const woodMat = new THREE.MeshLambertMaterial({ map: tex('tex_wood.jpg') });
+const darkWoodMat = new THREE.MeshLambertMaterial({ map: tex('tex_wood.jpg'), color: 0x8a7f78 });
+const tatamiMat = new THREE.MeshLambertMaterial({ map: tex('tex_tatami.jpg'), side: THREE.DoubleSide });
+const heriMat = new THREE.MeshLambertMaterial({ color: 0x1a1712, side: THREE.DoubleSide });
+const ceilMat = new THREE.MeshLambertMaterial({ map: tex('tex_tenjo.jpg', W, H, true), side: THREE.DoubleSide });
+const futonMat = new THREE.MeshLambertMaterial({ map: tex('tex_shoji.jpg'), color: 0xc9c2b4 });
+
+// 障子：和紙の画像に、木の格子（組子）を描き足す。月明かりで青白く光る
+const shojiCv = document.createElement('canvas'); shojiCv.width = shojiCv.height = 512;
+const shojiTex = new THREE.CanvasTexture(shojiCv); shojiTex.colorSpace = THREE.SRGBColorSpace;
+const shojiImg = new Image();
+shojiImg.onload = () => {
+  const g = shojiCv.getContext('2d'); g.drawImage(shojiImg, 0, 0, 512, 512);
+  g.fillStyle = '#24180f';
+  for (let i = 1; i < 4; i++) g.fillRect(i * 128 - 4, 0, 8, 512);
+  for (let i = 1; i < 6; i++) g.fillRect(0, Math.round(i * 512 / 6) - 4, 512, 8);
+  g.lineWidth = 24; g.strokeStyle = '#24180f'; g.strokeRect(0, 0, 512, 512);
+  shojiTex.needsUpdate = true;
+};
+shojiImg.src = 'img/tex_shoji.jpg';
+const shojiMat = new THREE.MeshLambertMaterial({ map: shojiTex, emissive: 0x30406a, emissiveMap: shojiTex, emissiveIntensity: 1.0 });
+
+/* ---------- 形 ---------- */
+const wallGeo = new THREE.BoxGeometry(CS, WH, CS);
+const lintelGeo = new THREE.BoxGeometry(CS, 0.7, CS);
+const postGeo = new THREE.BoxGeometry(0.16, WH, 0.16);
+const nageshiX = new THREE.BoxGeometry(CS, 0.1, 0.07), nageshiZ = new THREE.BoxGeometry(0.07, 0.1, CS);
+const SW = CS - 0.16, SH = 1.9;
+const shojiGeo = new THREE.PlaneGeometry(SW, SH);
+const shojiGrid = (() => { // 目を閉じたときに見える障子の格子
+  const p = [];
+  for (let i = 1; i < 4; i++) { const x = -SW / 2 + SW * i / 4; p.push(x, -SH / 2, 0.005, x, SH / 2, 0.005); }
+  for (let i = 1; i < 6; i++) { const y = -SH / 2 + SH * i / 6; p.push(-SW / 2, y, 0.005, SW / 2, y, 0.005); }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(p, 3)); return g;
+})();
+
+// 天井
+const ceil = new THREE.Mesh(new THREE.PlaneGeometry(W * CS, H * CS), ceilMat);
+ceil.rotation.x = Math.PI / 2; ceil.position.set(W * CS / 2, WH, H * CS / 2);
+ceil.userData.mat = ceilMat; scene.add(ceil); solid.push(ceil);
+
+// 畳（1マスに2枚、向きは互い違い）を1つの形にまとめる
+const tq = { pos: [], uv: [], idx: [] }, hq = { pos: [], uv: [], idx: [] };
+function quad(q, x0, z0, x1, z1, y, a = 1, b = 1, swap = false) {
+  const n = q.pos.length / 3;
+  q.pos.push(x0, y, z0, x1, y, z0, x1, y, z1, x0, y, z1);
+  q.uv.push(...(swap ? [0, 0, 0, a, b, a, b, 0] : [0, 0, a, 0, a, b, 0, b]));
+  q.idx.push(n, n + 2, n + 1, n, n + 3, n + 2);
+}
+function toMesh(q, mat) {
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(q.pos, 3));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(q.uv, 2));
+  g.setIndex(q.idx); g.computeVertexNormals();
+  const m = new THREE.Mesh(g, mat); m.userData.mat = mat; scene.add(m); solid.push(m); return m;
+}
+
+const tatamiPts = [];
+const postKeys = new Set();
+function addPost(x, z) {
+  const k = x.toFixed(2) + ',' + z.toFixed(2);
+  if (!postKeys.has(k)) { postKeys.add(k); addSolid(postGeo, woodMat, x, WH / 2, z); }
+}
+let start = { x: CS * 1.5, z: CS * 1.5 };
+const orbDefs = [];
+const floorCells = [];
+for (let r = 0; r < H; r++) for (let c = 0; c < W; c++) {
+  const ch = MAP[r][c], x = c * CS + CS / 2, z = r * CS + CS / 2;
+  if (ch === '#') { addSolid(wallGeo, wallMat, x, WH / 2, z); lines[lines.length - 1].userData.wall = true; continue; }
+  floorCells.push({ x, z });
+  if (ch === 'd') addSolid(lintelGeo, woodMat, x, WH - 0.35, z);
+  if (ch === 'S') start = { x, z };
+  if (ch === 'O' || ch === 'T' || ch === 'M') orbDefs.push({ x, z, real: ch === 'O', moving: ch === 'M' });
+
+  // 畳
+  const x0 = c * CS, z0 = r * CS, y = 0.01, e = 0.035;
+  if ((r + c) % 2) {          // 縦長2枚
+    for (const ox of [0, 1]) {
+      quad(tq, x0 + ox, z0, x0 + ox + 1, z0 + 2, 0, 1, 2);
+      quad(hq, x0 + ox, z0, x0 + ox + e, z0 + 2, 0.004); quad(hq, x0 + ox + 1 - e, z0, x0 + ox + 1, z0 + 2, 0.004);
+    }
+  } else {                    // 横長2枚
+    for (const oz of [0, 1]) {
+      quad(tq, x0, z0 + oz, x0 + 2, z0 + oz + 1, 0, 2, 1, true);
+      quad(hq, x0, z0 + oz, x0 + 2, z0 + oz + e, 0.004); quad(hq, x0, z0 + oz + 1 - e, x0 + 2, z0 + oz + 1, 0.004);
+    }
+  }
+  const sq = [[x0, z0, x0 + CS, z0], [x0 + CS, z0, x0 + CS, z0 + CS], [x0 + CS, z0 + CS, x0, z0 + CS], [x0, z0 + CS, x0, z0]];
+  sq.push((r + c) % 2 ? [x0 + CS / 2, z0, x0 + CS / 2, z0 + CS] : [x0, z0 + CS / 2, x0 + CS, z0 + CS / 2]);
+  for (const [ax, az, bx, bz] of sq) tatamiPts.push(ax, y, az, bx, y, bz);
+
+  // 壁に面したところ：柱・長押（壁の横木）・外周は障子
+  for (const [dc, dr] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+    if (!isWall(c + dc, r + dr)) continue;
+    const fx = x + dc * CS / 2, fz = z + dr * CS / 2, alongX = dr !== 0;
+    if (alongX) { addPost(fx - CS / 2, fz); addPost(fx + CS / 2, fz); } else { addPost(fx, fz - CS / 2); addPost(fx, fz + CS / 2); }
+    addSolid(alongX ? nageshiX : nageshiZ, woodMat, fx - dc * 0.035, 1.95, fz - dr * 0.035);
+    if (isEdge(c + dc, r + dr) && ch !== 'd') {
+      const rot = dr === -1 ? 0 : dr === 1 ? Math.PI : dc === 1 ? -Math.PI / 2 : Math.PI / 2;
+      addSolid(shojiGeo, shojiMat, fx - dc * 0.02, SH / 2 + 0.02, fz - dr * 0.02, rot, shojiGrid);
+    }
+  }
+}
+toMesh(tq, tatamiMat); toMesh(hq, heriMat);
+const tatamiGeo = new THREE.BufferGeometry();
+tatamiGeo.setAttribute('position', new THREE.Float32BufferAttribute(tatamiPts, 3));
+const tatami = new THREE.LineSegments(tatamiGeo, tatamiLineMat);
+tatami.visible = false; scene.add(tatami); lines.push(tatami);
+
+// 家具（ぶつかる）
+const props = [];
+function addProp(c, r, w, h, d, mat, ox = 0, oz = 0) {
+  const x = c * CS + CS / 2 + ox, z = r * CS + CS / 2 + oz;
+  addSolid(new THREE.BoxGeometry(w, h, d), mat, x, h / 2, z);
+  props.push({ x, z, r: Math.max(w, d) / 2 });
+}
+// addProp(列, 行, 幅, 高さ, 奥行き, 質感, ずらしX, ずらしZ)
+addProp(2, 2, 1.0, 0.35, 0.7, woodMat);                  // ちゃぶ台
+addProp(12, 1, 0.9, 1.3, 0.45, darkWoodMat, 0.45, -0.7); // 箪笥
+addProp(8, 1, 0.5, 1.0, 0.5, woodMat, 0, -0.6);          // 行灯台
+addProp(6, 5, 1.0, 0.15, 1.9, futonMat, 0, 0.3);         // 布団
+addProp(20, 5, 0.5, 1.6, 1.0, darkWoodMat, 0.6, 0);      // 仏壇
+addProp(9, 12, 1.4, 0.4, 0.8, woodMat);                  // 座卓
+addProp(16, 9, 1.0, 1.2, 0.45, darkWoodMat, 0, 0.7);     // 箪笥
+addProp(2, 11, 1.0, 0.35, 0.7, woodMat);                 // ちゃぶ台
+addProp(19, 1, 1.9, 0.15, 1.0, futonMat, 0, -0.3);       // 布団
+
+/* ---------- 光（本物のお守り・罠） ---------- */
+function glowTexture() {
+  const s = 128, cv = document.createElement('canvas'); cv.width = cv.height = s;
+  const g = cv.getContext('2d'), grd = g.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s / 2);
+  grd.addColorStop(0, 'rgba(255,255,255,1)'); grd.addColorStop(0.25, 'rgba(255,255,255,.55)');
+  grd.addColorStop(0.6, 'rgba(255,255,255,.12)'); grd.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = grd; g.fillRect(0, 0, s, s);
+  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+const glowTex = glowTexture();
+// 目を開けたときに見える形（本物＝お守り、罠＝鈴・ほおずき・提灯）
+const ITEMS = {
+  real: { map: tex('item_omamori.webp'), w: 0.26, h: 0.35 },
+  traps: [
+    { map: tex('item_suzu.webp'), w: 0.3, h: 0.3 },
+    { map: tex('item_hozuki.webp'), w: 0.3, h: 0.3 },
+    { map: tex('item_chochin.webp'), w: 0.32, h: 0.32 },
+  ],
+};
+let trapNo = 0;
+const orbs = orbDefs.map((d, i) => {
+  const color = new THREE.Color(d.real ? REAL_COLOR : TRAP_COLORS[i % TRAP_COLORS.length]);
+  const mat = new THREE.SpriteMaterial({ map: glowTex, color, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, fog: false });
+  const sp = new THREE.Sprite(mat); scene.add(sp);
+  const it = d.real ? ITEMS.real : ITEMS.traps[trapNo++ % ITEMS.traps.length];
+  const item = new THREE.Sprite(new THREE.SpriteMaterial({ map: it.map, color: 0xd8d0c8, transparent: true, depthWrite: false }));
+  item.scale.set(it.w, it.h, 1); item.renderOrder = 2; scene.add(item);
+  const light = new THREE.PointLight(color, 4, 5, 2); scene.add(light);
+  return { ...d, color, sp, item, light, phase: Math.random() * 6.28, active: true, cool: 0, pos: new THREE.Vector3(d.x, 1.1, d.z) };
+});
+
+/* ---------- 画面効果（まぶたの裏） ---------- */
+const rtOpt = { type: THREE.HalfFloatType, samples: isTouch ? 0 : 4 };
+let rtScene = new THREE.WebGLRenderTarget(1, 1, rtOpt);
+let rtAfter = new THREE.WebGLRenderTarget(1, 1, rtOpt);
+const post = new THREE.ShaderMaterial({
+  uniforms: {
+    tScene: { value: null }, tAfter: { value: null }, res: { value: new THREE.Vector2() },
+    closedMix: { value: 0 }, lid: { value: 0 }, afterAmt: { value: 0 }, san: { value: 1 },
+    flash: { value: 0 }, time: { value: 0 }, openTime: { value: 0 }, glare: { value: 0 },
+  },
+  vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }`,
+  fragmentShader: `
+    uniform sampler2D tScene, tAfter; uniform vec2 res;
+    uniform float closedMix, lid, afterAmt, san, flash, time, openTime, glare;
+    varying vec2 vUv;
+    float hash(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+    float vnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+      return mix(mix(hash(i), hash(i + vec2(1, 0)), f.x), mix(hash(i + vec2(0, 1)), hash(i + vec2(1, 1)), f.x), f.y); }
+    void main(){
+      float nm = clamp(1.0 - san, 0.0, 1.0);               // 悪夢の度合い
+      vec2 uv = vUv;
+      float w = nm * nm * 0.008 + flash * 0.012;           // ゆがみ
+      uv += w * vec2(sin(uv.y * 30.0 + time * 1.7), cos(uv.x * 26.0 + time * 1.3));
+      float ca = 0.0012 + nm * 0.004 + flash * 0.016;      // 色ずれ
+      vec3 c = vec3(texture2D(tScene, uv + vec2(ca, 0.0)).r, texture2D(tScene, uv).g, texture2D(tScene, uv - vec2(ca, 0.0)).b);
+      vec2 q = vUv - 0.5; q.x *= res.x / res.y; float d = length(q);
+      float g = dot(c, vec3(0.299, 0.587, 0.114));
+
+      // 目を開けている：色が見える。開けているほど端から暗く（目の負担）
+      vec3 oc = c;
+      if (glare > 0.001) {
+        // 開けた直後はまぶしい：白くとび、ぼやけ、だんだんピントが合っていく
+        vec3 gb = vec3(0.0);
+        float gr = 0.003 + glare * 0.03;
+        for (int i = 0; i < 12; i++) {
+          float a = float(i) * 0.5236;
+          float rr = gr * (0.4 + 0.6 * mod(float(i), 2.0));
+          gb += texture2D(tScene, uv + vec2(cos(a), sin(a)) * rr).rgb;
+        }
+        gb /= 12.0;
+        float ge = pow(glare, 1.5);
+        oc = mix(oc, gb, min(1.0, glare * 1.3));                         // ぼやけ
+        oc += gb * ge * 6.0;                                             // 光がにじんで広がる
+        oc = oc * (1.0 + ge * 3.0) + vec3(1.0, 0.97, 0.9) * ge * 0.55;   // 白くとぶ
+        oc = mix(oc, vec3(dot(oc, vec3(0.299, 0.587, 0.114))), ge * 0.6); // 色がまだわからない
+      }
+      vec3 openC = mix(oc, vec3(dot(oc, vec3(0.299, 0.587, 0.114))) * vec3(1.15, 0.85, 0.8), nm * 0.6);
+
+      // SAN値が低いほど：周りが赤く染まり、ぼやけ、二重に見える（SAN値70くらいから出始める）
+      float low = smoothstep(0.3, 1.0, nm);
+      if (low > 0.001) {
+        float edge = smoothstep(0.15, 0.8, d);
+        vec3 eb = vec3(0.0);
+        for (int i = 0; i < 8; i++) {
+          float a = float(i) * 0.7854 + time * 0.2;
+          eb += texture2D(tScene, uv + vec2(cos(a), sin(a)) * (0.004 + low * 0.018) * (0.3 + edge)).rgb;
+        }
+        eb /= 8.0;
+        openC = mix(openC, eb, edge * low);                                          // 端がぼやける
+        vec3 ghost = texture2D(tScene, uv + vec2(sin(time * 0.7), cos(time * 0.5)) * low * 0.012).rgb;
+        openC = mix(openC, (openC + ghost) * 0.5, low * 0.6);                        // 二重に見える
+        float beat = 0.7 + 0.3 * pow(abs(sin(time * (1.6 + low * 1.4))), 6.0);      // 鼓動に合わせて脈打つ
+        float red = clamp(smoothstep(0.7 - low * 0.35, 1.05, d + 0.1) * low * 1.4 * beat, 0.0, 1.0);
+        openC = mix(openC, vec3(0.07, 0.0, 0.003) + openC * vec3(0.6, 0.04, 0.04), red); // 周りが暗い赤に染まる
+      }
+      float strain = clamp(openTime / 6.0, 0.0, 1.0);
+      float ov = 1.0 - smoothstep(0.35 - 0.15 * strain, 0.95 - 0.35 * strain, d);
+      openC *= mix(0.3, 1.0, ov);
+
+      // 目を閉じている：白黒＋輪郭線＋残像＋光の粒
+      // ぼかす（画面の端ほど強く）。線がにじんで、はっきり見えない
+      float br = 0.004 + d * 0.012;
+      float bl = 0.0;
+      for (int i = 0; i < 12; i++) {
+        float a = float(i) * 0.5236 + time * 0.4;
+        float rr = br * (0.45 + 0.55 * mod(float(i), 2.0));
+        bl += dot(texture2D(tScene, uv + vec2(cos(a), sin(a)) * rr).rgb, vec3(0.299, 0.587, 0.114));
+      }
+      bl /= 12.0;
+      float lum = mix(g, bl, 0.7) * 1.1;
+      // まぶたの裏のむら：ゆっくり動く暗いもやで、ところどころ線が見えなくなる
+      float mott = vnoise(vUv * 3.0 + vec2(time * 0.05, -time * 0.035)) * 0.6 + vnoise(vUv * 7.0 - time * 0.08) * 0.4;
+      lum *= smoothstep(0.2, 0.75, mott) * 0.65 + 0.35;
+      vec3 af = texture2D(tAfter, vUv).rgb;
+      float cl = lum + dot(af, vec3(0.299, 0.587, 0.114)) * afterAmt * 0.55;
+      cl += (hash(vUv * res + fract(time) * 100.0) - 0.5) * 0.025;
+      for (int i = 0; i < 3; i++) {
+        float fi = float(i);
+        vec2 p = vec2(sin(time * 0.13 + fi * 2.1), cos(time * 0.11 + fi * 1.7)) * 0.35;
+        cl += 0.035 / (1.0 + 28.0 * length(q - p));
+      }
+      cl *= mix(0.22, 1.0, 1.0 - smoothstep(0.3, 0.85, d));
+      vec3 closedC = vec3(cl) * vec3(0.97, 0.98, 1.0);
+
+      vec3 col = mix(openC, closedC, closedMix);
+      float fl = flash * step(0.0, sin(time * 55.0));       // 明滅
+      col = mix(col, vec3(1.0, 0.94, 0.9), fl * 0.75);
+
+      // まぶた（上下から閉じる）
+      float half_ = mix(0.62, -0.06, lid) - q.x * q.x * 0.3 * lid;
+      col *= 1.0 - smoothstep(half_ - 0.03, half_ + 0.01, abs(vUv.y - 0.5));
+      gl_FragColor = vec4(pow(max(col, 0.0), vec3(1.0 / 2.2)), 1.0);
+    }`,
+  depthTest: false, depthWrite: false,
+});
+const postScene = new THREE.Scene();
+postScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), post));
+const postCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+
+function resize() {
+  renderer.setSize(innerWidth, innerHeight);
+  camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
+  const pr = renderer.getPixelRatio(), w = Math.floor(innerWidth * pr), h = Math.floor(innerHeight * pr);
+  rtScene.setSize(w, h); rtAfter.setSize(w, h); post.uniforms.res.value.set(w, h);
+}
+addEventListener('resize', resize); resize();
+
+/* ---------- 目を閉じているときの「うそ」 ----------
+   目を閉じるたびに作り直す。SAN値が減るほど、うそが増える。
+   A 偽の道（ない壁が見える／ある壁が見えない）  B 幻の光  C 人影  D 線のずれ */
+for (const l of lines) l.userData.base = l.position.clone();
+const lieLineMat = new THREE.LineBasicMaterial({ color: 0x5c5c5c });
+const fakeWalls = Array.from({ length: 6 }, () => {
+  const l = new THREE.LineSegments(edgeCache.get(wallGeo), lieLineMat); l.visible = false; scene.add(l); return l;
+});
+const fakeLights = Array.from({ length: 4 }, () => {
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: 0xffffff, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, fog: false }));
+  s.visible = false; s.userData.phase = Math.random() * 6.28; scene.add(s); return s;
+});
+const humanGeo = (() => { // 長い髪の、着物を着た人の輪郭（正面）
+  const p = [], seg = (pts, close) => { for (let i = 0; i < pts.length - (close ? 0 : 1); i++) { const a = pts[i], b = pts[(i + 1) % pts.length]; p.push(a[0], a[1], 0, b[0], b[1], 0); } };
+  seg(Array.from({ length: 16 }, (_, i) => [Math.cos(i / 16 * 6.283) * 0.11, 1.47 + Math.sin(i / 16 * 6.283) * 0.13]), true);
+  seg([[-0.05, 1.35], [-0.2, 1.29], [-0.26, 0.8], [-0.21, 0.77], [-0.17, 1.1], [-0.21, 0.02], [0.21, 0.02], [0.17, 1.1], [0.21, 0.77], [0.26, 0.8], [0.2, 1.29], [0.05, 1.35]], false);
+  seg([[-0.1, 1.5], [-0.14, 1.05]], false); seg([[0.1, 1.5], [0.14, 1.05]], false);
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(p, 3)); return g;
+})();
+const humans = Array.from({ length: 2 }, () => {
+  const l = new THREE.LineSegments(humanGeo, new THREE.LineBasicMaterial({ color: 0x8a8a8a, fog: false })); l.visible = false; scene.add(l); return l;
+});
+const lieLevel = () => 0.15 + 0.85 * (1 - san / 100); // 0.15（SAN満タン）〜 1.0（SAN 0）
+function pickCells(n, minD, maxD) {
+  const c = floorCells.filter(f => { const d = Math.hypot(f.x - px, f.z - pz); return d >= minD && d <= maxD; });
+  for (let i = c.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [c[i], c[j]] = [c[j], c[i]]; }
+  return c.slice(0, n);
+}
+function shuffleLies() {
+  const lie = lieLevel();
+  // D 線のずれ
+  const mag = 0.08 + lie * 0.4, frac = 0.25 + lie * 0.5;
+  for (const l of lines) {
+    if (!l.userData.base) continue;
+    l.position.copy(l.userData.base);
+    if (Math.random() < frac) { const a = Math.random() * 6.283, r = Math.random() * mag; l.position.x += Math.cos(a) * r; l.position.z += Math.sin(a) * r; }
+    // A ある壁が見えない
+    if (l.userData.wall && Math.hypot(l.userData.base.x - px, l.userData.base.z - pz) < 10 && Math.random() < lie * 0.3) l.visible = false;
+  }
+  // A ない壁が見える
+  const fw = pickCells(Math.round(lie * 5), 3, 9);
+  fakeWalls.forEach((l, i) => { l.visible = !!fw[i]; if (fw[i]) l.position.set(fw[i].x, WH / 2, fw[i].z); });
+  // B 幻の光
+  const fl = pickCells(Math.max(0, Math.floor(lie * 4.5 - 0.5)), 2.5, 10);
+  fakeLights.forEach((s, i) => { s.visible = !!fl[i]; if (fl[i]) s.position.set(fl[i].x + (Math.random() - 0.5), 1.1, fl[i].z + (Math.random() - 0.5)); });
+  // C 人影（SAN値が半分くらいから）
+  const hn = lie > 0.75 ? 2 : lie > 0.45 ? 1 : 0;
+  const hc = pickCells(hn, 3.5, 7);
+  humans.forEach((h, i) => { h.visible = !!hc[i]; if (hc[i]) h.position.set(hc[i].x + (Math.random() - 0.5) * 0.8, 0, hc[i].z + (Math.random() - 0.5) * 0.8); });
+}
+function hideLies() { for (const o of [...fakeWalls, ...fakeLights, ...humans]) o.visible = false; }
+function updateLies() {
+  if (!closed) return;
+  for (const s of fakeLights) {
+    if (!s.visible) continue;
+    s.scale.setScalar(1.5 + Math.sin(time * 2 + s.userData.phase) * 0.25);
+    s.position.y = 1.1 + Math.sin(time * 1.3 + s.userData.phase) * 0.12;
+    if (Math.hypot(s.position.x - px, s.position.z - pz) < 0.8) s.visible = false; // 触れると消える
+  }
+  for (const h of humans) {
+    if (!h.visible) continue;
+    h.rotation.y = Math.atan2(px - h.position.x, pz - h.position.z); // こちらを向く
+    if (Math.hypot(h.position.x - px, h.position.z - pz) < 2.5) h.visible = false; // 近づくと消える
+  }
+}
+
+/* ---------- 状態 ---------- */
+const $ = (id) => document.getElementById(id);
+const sanEl = $('san'), sanFill = sanEl.querySelector('.fill');
+let state = 'title';
+let yaw, pitch, px, pz, san, elapsed, walkT, walkAmt, lastHit, flash, afterAmt, openTime, glare;
+let closed, wantClosed, blinkT, blinkTarget, blinkSwitched;
+const keys = {};
+
+function reset() {
+  px = start.x; pz = start.z; yaw = -Math.PI / 2; pitch = 0;
+  san = 100; elapsed = 0; walkT = 0; walkAmt = 0; lastHit = -99; flash = 0; afterAmt = 0; openTime = 0; glare = 0;
+  closed = true; wantClosed = true; blinkT = -1; blinkSwitched = false; // ふだんは目を閉じている
+  applyClosed(true);
+  for (const o of orbs) { o.active = true; o.cool = 0; }
+}
+
+function applyClosed(v) {
+  closed = v;
+  for (const m of solid) m.material = v ? blackMat : m.userData.mat;
+  for (const l of lines) l.visible = v;
+  if (v) shuffleLies(); else hideLies();
+  scene.fog = v ? fogClosed : fogOpen;
+  for (const o of orbs) { o.sp.material.color.copy(v ? new THREE.Color(0xffffff) : o.color); o.light.visible = !v; }
+}
+
+function hurt(n) {
+  san = Math.max(0, san - n); lastHit = elapsed; flash = 1; SND.hit();
+  sanEl.classList.remove('hit'); void sanEl.offsetWidth; sanEl.classList.add('hit');
+}
+
+function setClosed(v) {
+  if (v) { [rtScene, rtAfter] = [rtAfter, rtScene]; afterAmt = 1; } // 閉じる直前の景色を残像として残す
+  applyClosed(v);
+  if (!v) {
+    openTime = 0; glare = 1; // 開けた直後はまぶしい
+    // 罠の近くで目を開けた
+    if (orbs.some(o => !o.real && o.active && Math.hypot(o.pos.x - px, o.pos.z - pz) < CFG.openNearRadius)) hurt(CFG.openNearDamage);
+  }
+}
+
+/* ---------- 音（音声ファイルを使わず、その場で作る） ---------- */
+const SND = (() => {
+  let ac = null, master, amb, ringGain, closedFilter, whiteShort, whiteLong;
+  let lastStep = 0, beatT = 0, muted = false;
+  function noiseBuf(sec, brown) {
+    const n = Math.floor(ac.sampleRate * sec), b = ac.createBuffer(1, n, ac.sampleRate), d = b.getChannelData(0);
+    let last = 0;
+    for (let i = 0; i < n; i++) { const w = Math.random() * 2 - 1; if (brown) { last = (last + 0.02 * w) / 1.02; d[i] = last * 3.5; } else d[i] = w; }
+    return b;
+  }
+  function env(g, t, a, peak, d) { g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + a); g.gain.exponentialRampToValueAtTime(0.0001, t + a + d); }
+  function init() {
+    if (ac) { ac.resume(); return; }
+    const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+    ac = new AC();
+    whiteShort = noiseBuf(0.3, false); whiteLong = noiseBuf(0.7, false);
+    master = ac.createGain(); master.gain.value = muted ? 0 : 0.8;
+    closedFilter = ac.createBiquadFilter(); closedFilter.type = 'lowpass'; closedFilter.frequency.value = 2500;
+    closedFilter.connect(master); master.connect(ac.destination);
+    // 夜の古い家の、低いうなり
+    const src = ac.createBufferSource(); src.buffer = noiseBuf(4, true); src.loop = true;
+    const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 180;
+    amb = ac.createGain(); amb.gain.value = 0.2;
+    src.connect(lp).connect(amb).connect(closedFilter); src.start();
+    // 耳鳴り（目を開けている間）
+    const ring = ac.createOscillator(); ring.type = 'sine'; ring.frequency.value = 7200;
+    ringGain = ac.createGain(); ringGain.gain.value = 0;
+    ring.connect(ringGain).connect(master); ring.start();
+  }
+  function step() { // 畳を踏む音
+    const t = ac.currentTime, s = ac.createBufferSource(); s.buffer = whiteShort; s.playbackRate.value = 0.8 + Math.random() * 0.4;
+    const f = ac.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 450 + Math.random() * 250;
+    const g = ac.createGain(); env(g, t, 0.005, 0.3, 0.16);
+    s.connect(f).connect(g).connect(closedFilter); s.start(t); s.stop(t + 0.3);
+  }
+  function thump(t, vol) { // 鼓動
+    const o = ac.createOscillator(); o.frequency.setValueAtTime(70, t); o.frequency.exponentialRampToValueAtTime(38, t + 0.15);
+    const g = ac.createGain(); env(g, t, 0.01, vol, 0.18);
+    o.connect(g).connect(master); o.start(t); o.stop(t + 0.3);
+  }
+  return {
+    init,
+    toggleMute() { muted = !muted; if (master) master.gain.value = muted ? 0 : 0.8; return muted; },
+    update(dt, s) {
+      if (!ac) return;
+      const t = ac.currentTime;
+      // 目を閉じると、音がこもって近く聞こえる
+      closedFilter.frequency.setTargetAtTime(s.closed ? 1400 : 6000, t, 0.08);
+      amb.gain.setTargetAtTime(s.playing ? (s.closed ? 0.32 : 0.18) : 0.1, t, 0.3);
+      // 耳鳴り：開けた直後と、開けている時間が長いほど強く
+      const rv = s.playing && !s.closed ? Math.min(0.05, 0.01 + s.glare * 0.03 + s.openTime * 0.004) : 0;
+      ringGain.gain.setTargetAtTime(rv, t, 0.1);
+      // 足音：1歩ごと
+      const n = Math.floor(s.walkT / Math.PI);
+      if (s.playing && n !== lastStep && s.walkAmt > 0.3) step();
+      lastStep = n;
+      // 鼓動：SAN値70から。低いほど速く、強く
+      const low = Math.max(0, Math.min(1, (70 - s.san) / 70));
+      if (s.playing && low > 0) {
+        beatT -= dt;
+        if (beatT <= 0) { const v = 0.12 + low * 0.45; thump(t, v); thump(t + 0.22, v * 0.6); beatT = 1.1 - low * 0.55; }
+      }
+    },
+    hit() { // 罠に触れた
+      if (!ac) return; const t = ac.currentTime;
+      const s = ac.createBufferSource(); s.buffer = whiteLong;
+      const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 900; f.Q.value = 0.7;
+      const g = ac.createGain(); env(g, t, 0.005, 0.5, 0.5); s.connect(f).connect(g).connect(master); s.start(t); s.stop(t + 0.7);
+      const o = ac.createOscillator(); o.type = 'sawtooth'; o.frequency.setValueAtTime(110, t); o.frequency.exponentialRampToValueAtTime(40, t + 0.6);
+      const g2 = ac.createGain(); env(g2, t, 0.01, 0.2, 0.6); o.connect(g2).connect(master); o.start(t); o.stop(t + 0.7);
+    },
+    bell() { // みつけた：鈴の音
+      if (!ac) return; const t = ac.currentTime;
+      for (const [fr, v] of [[1320, 0.16], [2667, 0.07], [3920, 0.04]]) for (const d of [0, 0.18]) {
+        const o = ac.createOscillator(); o.frequency.value = fr; const g = ac.createGain(); env(g, t + d, 0.005, v, 1.6);
+        o.connect(g).connect(master); o.start(t + d); o.stop(t + d + 1.8);
+      }
+    },
+    drone() { // ゲームオーバー
+      if (!ac) return; const t = ac.currentTime;
+      for (const fr of [55, 58.3]) { const o = ac.createOscillator(); o.type = 'triangle'; o.frequency.value = fr; const g = ac.createGain(); env(g, t, 0.3, 0.28, 3); o.connect(g).connect(master); o.start(t); o.stop(t + 3.5); }
+    },
+  };
+})();
+
+/* ---------- 入力 ---------- */
+const canvas = renderer.domElement;
+function showScreen(id) { for (const s of document.querySelectorAll('.screen')) s.classList.toggle('on', s.id === id); }
+function begin() { if (state !== 'play' && state !== 'pause') reset(); state = 'play'; showScreen(null); SND.init();
+  if (isTouch) return; // スマホは画面のボタンとスティックで操作
+  try { const p = canvas.requestPointerLock?.(); p?.catch?.(() => {}); } catch (e) {} } // 使えない環境ではドラッグで見回す
+for (const s of document.querySelectorAll('.screen')) s.addEventListener('click', begin);
+document.addEventListener('pointerlockchange', () => {
+  if (!document.pointerLockElement && state === 'play') { state = 'pause'; showScreen('scr-pause'); wantClosed = true; }
+});
+addEventListener('mousemove', (e) => {
+  if (state !== 'play') return;
+  if (document.pointerLockElement !== canvas && !(e.buttons & 1)) return;
+  yaw -= e.movementX * 0.0022; pitch = Math.max(-1.2, Math.min(1.2, pitch - e.movementY * 0.0022));
+});
+// スペースを押している間だけ目を開ける
+addEventListener('keydown', (e) => {
+  if (e.code === 'Space') { e.preventDefault(); if (state === 'play') wantClosed = false; }
+  if (e.code === 'KeyM' && !e.repeat) SND.toggleMute();
+  keys[e.code] = true;
+});
+addEventListener('keyup', (e) => { if (e.code === 'Space') wantClosed = true; keys[e.code] = false; });
+// スマホ：左半分＝スティックで歩く／右半分＝ドラッグで見回す／右下のボタンを押している間＝目を開ける
+const stick = { id: null, ox: 0, oy: 0, x: 0, z: 0 }, look = { id: null, x: 0, y: 0 };
+const stickEl = $('stick'), knobEl = $('knob'), eyeBtn = $('eye-btn');
+function onTouchStart(e) {
+  if (state !== 'play') return;
+  for (const t of e.changedTouches) {
+    if (t.target === eyeBtn) { wantClosed = false; eyeBtn.classList.add('on'); eyeBtn.dataset.id = t.identifier; continue; }
+    if (t.clientX < innerWidth / 2 && stick.id === null) {
+      stick.id = t.identifier; stick.ox = t.clientX; stick.oy = t.clientY; stick.x = stick.z = 0;
+      stickEl.style.left = t.clientX + 'px'; stickEl.style.top = t.clientY + 'px'; stickEl.classList.add('on'); knobEl.style.transform = '';
+    } else if (look.id === null) { look.id = t.identifier; look.x = t.clientX; look.y = t.clientY; }
+  }
+  e.preventDefault();
+}
+function onTouchMove(e) {
+  for (const t of e.changedTouches) {
+    if (t.identifier === stick.id) {
+      let dx = t.clientX - stick.ox, dy = t.clientY - stick.oy; const r = Math.hypot(dx, dy), R = 55;
+      if (r > R) { dx *= R / r; dy *= R / r; }
+      stick.x = dx / R; stick.z = -dy / R; knobEl.style.transform = `translate(${dx}px, ${dy}px)`;
+    } else if (t.identifier === look.id) {
+      yaw -= (t.clientX - look.x) * 0.005; pitch = Math.max(-1.2, Math.min(1.2, pitch - (t.clientY - look.y) * 0.005));
+      look.x = t.clientX; look.y = t.clientY;
+    }
+  }
+  e.preventDefault();
+}
+function onTouchEnd(e) {
+  for (const t of e.changedTouches) {
+    if (String(t.identifier) === eyeBtn.dataset.id) { wantClosed = true; eyeBtn.classList.remove('on'); eyeBtn.dataset.id = ''; }
+    if (t.identifier === stick.id) { stick.id = null; stick.x = stick.z = 0; stickEl.classList.remove('on'); }
+    if (t.identifier === look.id) look.id = null;
+  }
+}
+if (isTouch) {
+  addEventListener('touchstart', onTouchStart, { passive: false });
+  addEventListener('touchmove', onTouchMove, { passive: false });
+  addEventListener('touchend', onTouchEnd); addEventListener('touchcancel', onTouchEnd);
+}
+addEventListener('blur', () => { wantClosed = true; for (const k in keys) keys[k] = false; });
+
+/* ---------- 当たり判定 ---------- */
+function blocked(x, z) {
+  const r = 0.3;
+  for (const [dx, dz] of [[r, r], [r, -r], [-r, r], [-r, -r]]) if (cell(x + dx, z + dz) === '#') return true;
+  for (const p of props) if (Math.hypot(p.x - x, p.z - z) < p.r + 0.3) return true;
+  return false;
+}
+
+/* ---------- 毎フレーム ---------- */
+const fmt = (t) => { const m = Math.floor(t / 60), s = t % 60; return String(m).padStart(2, '0') + ':' + s.toFixed(2).padStart(5, '0'); };
+const clock = new THREE.Clock();
+let time = 0;
+function update(dt) {
+  elapsed += dt;
+  // まばたき（閉じる・開ける）
+  if (blinkT < 0 && wantClosed !== closed) { blinkT = 0; blinkTarget = wantClosed; blinkSwitched = false; }
+  if (blinkT >= 0) {
+    blinkT += dt / (blinkTarget ? 0.18 : 0.28);
+    if (!blinkSwitched && blinkT >= 0.5) { blinkSwitched = true; setClosed(blinkTarget); }
+    if (blinkT >= 1) blinkT = -1;
+  }
+  // 歩く（目を閉じているときだけ）
+  let mx = (keys.KeyD ? 1 : 0) - (keys.KeyA ? 1 : 0), mz = (keys.KeyW ? 1 : 0) - (keys.KeyS ? 1 : 0);
+  if (stick.id !== null) { mx = stick.x; mz = stick.z; } // スマホのスティック
+  const moving = closed && Math.hypot(mx, mz) > 0.15;
+  walkAmt += ((moving ? 1 : 0) - walkAmt) * Math.min(1, dt * (moving ? 4 : 6)); // 歩き出し・止まりをなめらかに
+  walkT += dt * 10.5 * walkAmt; // 1歩ごとの周期（約3.3歩/秒）
+  if (moving) {
+    const len = Math.hypot(mx, mz); if (len > 1) { mx /= len; mz /= len; }
+    const fx = -Math.sin(yaw), fz = -Math.cos(yaw), rx = Math.cos(yaw), rz = -Math.sin(yaw);
+    const vx = (fx * mz + rx * mx) * CFG.walkSpeed * dt, vz = (fz * mz + rz * mx) * CFG.walkSpeed * dt;
+    if (!blocked(px + vx, pz)) px += vx;
+    if (!blocked(px, pz + vz)) pz += vz;
+  }
+  // 光
+  for (const o of orbs) {
+    if (!o.active) { o.cool -= dt; if (o.cool <= 0) o.active = true; }
+    if (o.moving) {
+      const nx = o.x + Math.sin(time * 0.45 + o.phase) * 1.4, nz = o.z + Math.cos(time * 0.33 + o.phase) * 1.4;
+      if (cell(nx, nz) !== '#') { o.pos.x = nx; o.pos.z = nz; }
+    }
+    o.pos.y = 1.1 + Math.sin(time * 1.3 + o.phase) * 0.12;
+    o.item.material.rotation = Math.sin(time * 0.9 + o.phase) * 0.12; // ゆらゆら揺れる
+    o.sp.position.copy(o.pos); o.light.position.copy(o.pos); o.item.position.copy(o.pos);
+    o.item.visible = o.active && !closed;
+    const s = closed ? 1.5 + Math.sin(time * 2 + o.phase) * 0.25 : 0.9;
+    o.sp.scale.setScalar(s); o.sp.visible = o.active; o.light.intensity = o.active ? 4 : 0;
+    const dist = Math.hypot(o.pos.x - px, o.pos.z - pz);
+    if (o.active && dist < CFG.touchRadius) {
+      if (o.real) return finish('clear');
+      if (closed) { hurt(CFG.touchDamage); o.active = false; o.cool = CFG.trapCooldown; }
+    }
+  }
+  updateLies();
+  // SAN値
+  if (!closed) { san -= CFG.openDrain * dt; openTime += dt; }
+  else if (elapsed - lastHit > CFG.regenDelay) san = Math.min(100, san + CFG.regen * dt);
+  if (san <= 0) { san = 0; return finish('over'); }
+  flash = Math.max(0, flash - dt * 1.6);
+  afterAmt = Math.max(0, afterAmt - dt * 0.7);
+  glare = closed ? 0 : Math.max(0, glare - dt / CFG.glareTime);
+}
+
+function finish(kind) {
+  state = kind; wantClosed = true;
+  document.exitPointerLock?.();
+  if (kind === 'clear') $('clear-time').textContent = 'クリアタイム　' + fmt(elapsed);
+  if (kind === 'clear') SND.bell(); else SND.drone();
+  showScreen(kind === 'clear' ? 'scr-clear' : 'scr-over');
+}
+
+function frame() {
+  const dt = Math.min(clock.getDelta(), 0.05);
+  time += dt;
+  if (state === 'play') update(dt);
+  else if (state === 'title') { yaw = (yaw ?? 0) + dt * 0.08; }
+
+  // 歩くときの揺れ：着地で沈み、左右に体重が移り、頭が少し傾く。手すりを探るように、少し不安定に
+  const a = walkAmt || 0, st = Math.sin(walkT || 0), bounce = Math.abs(st);
+  const sway = st * 0.03 * a, rx = Math.cos(yaw), rz = -Math.sin(yaw);
+  const wobble = Math.sin((walkT || 0) * 0.37) * 0.012 * a; // ゆっくりしたふらつき
+  camera.position.set(px + rx * sway, EYE + (bounce - 0.65) * 0.06 * a, pz + rz * sway);
+  camera.rotation.set(pitch - bounce * 0.012 * a + wobble * 0.5, yaw + wobble, st * 0.012 * a);
+  renderer.setRenderTarget(rtScene); renderer.render(scene, camera);
+  renderer.setRenderTarget(null);
+  const u = post.uniforms;
+  u.tScene.value = rtScene.texture; u.tAfter.value = rtAfter.texture;
+  u.closedMix.value = closed ? 1 : 0; u.lid.value = blinkT >= 0 ? Math.sin(Math.PI * blinkT) : 0;
+  u.afterAmt.value = afterAmt; u.san.value = san / 100; u.flash.value = flash; u.time.value = time; u.openTime.value = openTime; u.glare.value = glare || 0;
+  renderer.render(postScene, postCam);
+  SND.update(dt, { playing: state === 'play', closed, walkT: walkT || 0, walkAmt: walkAmt || 0, san, openTime, glare: glare || 0 });
+  document.body.classList.toggle('playing', state === 'play');
+
+  $('time').textContent = fmt(elapsed);
+  sanFill.style.width = san + '%';
+  sanEl.classList.toggle('low', san < 30);
+  $('state').textContent = state === 'play' ? (closed ? '目を閉じている' : '目を開けている') : '';
+  requestAnimationFrame(frame);
+}
+reset();
+requestAnimationFrame(frame);
+
+</script>
+</body>
+</html>
