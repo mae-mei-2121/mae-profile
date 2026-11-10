@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>翠嶺園について — 翠嶺園</title>
+<meta name="description" content="創業1898年。同じ山で、霧を待ちながら茶を育ててきた翠嶺園のごあいさつ・理念・歩み・会社概要。（架空の企業のサンプルサイトです）">
+<meta name="robots" content="noindex, nofollow, noarchive, noimageindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Old+Mincho:wght@400;700&family=EB+Garamond:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="sub.css">
+<style>
+/* ごあいさつ */
+.greet{display:grid;grid-template-columns:auto minmax(0,1fr);gap:clamp(40px,8vw,120px);align-items:start}
+.greet h2{writing-mode:vertical-rl;font-size:clamp(1.7rem,3.2vw,2.4rem);font-weight:400;letter-spacing:.3em;line-height:1.8;white-space:nowrap}
+.greet-body p{font-size:clamp(.96rem,1.4vw,1.06rem);line-height:2.5;letter-spacing:.14em}
+.greet-body p + p{margin-top:1.6em}
+.sign{margin-top:48px;text-align:right;font-size:.9rem;color:var(--ink-soft)}
+.sign b{display:block;font-size:1.4rem;font-weight:400;color:var(--ink);letter-spacing:.3em;margin-top:4px}
+@media (max-width:720px){.greet{grid-template-columns:1fr}.greet h2{justify-self:end}}
+
+/* 大切にしていること */
+.motto{text-align:center;font-size:clamp(1.8rem,4vw,2.8rem);letter-spacing:.4em;margin-bottom:clamp(48px,7vw,88px)}
+.motto small{display:block;font-size:.86rem;letter-spacing:.2em;color:var(--ink-soft);margin-top:8px}
+.vals{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(24px,4vw,56px)}
+.vals li{list-style:none;border-top:1px solid var(--ink);padding-top:28px}
+.vals .no{font-size:3rem;line-height:1;color:var(--accent)}
+.vals h3{font-size:1.4rem;font-weight:400;letter-spacing:.24em;margin:20px 0 10px}
+.vals p{color:var(--ink-soft);font-size:.94rem}
+@media (max-width:720px){.vals{grid-template-columns:1fr}}
+
+/* 歩み */
+.tl{position:relative;padding-left:clamp(120px,18vw,200px)}
+.tl::before{content:"";position:absolute;left:clamp(96px,15vw,170px);top:12px;bottom:12px;width:1px;background:var(--line)}
+.tl li{list-style:none;position:relative;padding:18px 0}
+.tl li::before{content:"";position:absolute;left:calc(clamp(96px,15vw,170px) - clamp(120px,18vw,200px) - 5px);top:30px;width:11px;height:11px;border-radius:50%;background:var(--kinari);border:1px solid var(--green)}
+.tl li:first-child::before,.tl li:last-child::before{background:var(--green)}
+.tl time{position:absolute;left:calc(0px - clamp(120px,18vw,200px));top:12px;font-family:var(--latin);font-size:clamp(1.5rem,2.6vw,2rem);color:var(--green);letter-spacing:.06em}
+.tl p{font-size:1rem}
+
+/* 会社概要 */
+.co{border-top:1px solid var(--line)}
+.co div{display:grid;grid-template-columns:10em 1fr;gap:16px;padding:22px 4px;border-bottom:1px solid var(--line)}
+.co dt{color:var(--ink-soft);font-size:.92rem}
+@media (max-width:560px){.co div{grid-template-columns:1fr;gap:0}}
+</style>
+</head>
+<body data-season="autumn">
+
+<header class="hd" id="hd">
+  <a class="logo" href="index.html"><b>翠嶺園</b><small>Suireien</small></a>
+  <button class="menu-btn" id="menuBtn" aria-expanded="false" aria-controls="nav">MENU</button>
+  <nav class="nav" id="nav">
+    <a href="about.html" aria-current="page">翠嶺園について</a>
+    <a href="farm.html">茶畑と製法</a>
+    <a href="index.html#tea">お茶</a>
+    <a href="index.html#shops">直営店</a>
+    <a href="recruit.html">採用</a>
+  </nav>
+</header>
+
+<main>
+  <section class="ph">
+    <svg class="ph-ridges" viewBox="0 0 1600 400" preserveAspectRatio="none" aria-hidden="true">
+      <path class="r1" d="M0 140 C220 70 380 60 560 110 C760 165 900 40 1120 50 C1320 60 1460 120 1600 100 V400 H0Z"/>
+      <path class="r2" d="M0 230 C200 180 380 170 600 220 C820 270 980 170 1200 160 C1380 152 1500 200 1600 190 V400 H0Z"/>
+      <path class="r3" d="M0 320 C280 270 560 270 820 300 C1080 330 1320 270 1600 280 V400 H0Z"/>
+    </svg>
+    <div class="ph-mist"></div>
+    <div class="ph-in">
+      <span class="en">About</span>
+      <h1>翠嶺園について</h1>
+      <p class="ph-crumb"><a href="index.html">トップ</a>　／　翠嶺園について</p>
+    </div>
+  </section>
+
+  <!-- ごあいさつ -->
+  <section class="sec">
+    <div class="wrap">
+      <div class="head rv"><h2>ごあいさつ</h2><span class="en">Message</span></div>
+      <div class="greet">
+        <h2 class="rv">百二十八年目の、<br>同じ山で。</h2>
+        <div class="greet-body rv">
+          <p>翠嶺園は、明治三十一年、初代がこの山の斜面を開いたことから始まりました。</p>
+          <p>それから百二十八年、私たちは同じ山で、霧を待ちながら茶を育ててきました。</p>
+          <p>淹れ方や届け方は、時代に合わせて少しずつ変えてきました。<br>けれど「山がつくる香りを、そのまま届ける」という仕事は、これからも変えません。</p>
+          <p class="sign">株式会社 翠嶺園　代表取締役（五代目）<b>峰岸 透</b></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 大切にしていること -->
+  <section class="sec alt">
+    <div class="wrap">
+      <div class="head rv"><h2>大切にしていること</h2><span class="en">Philosophy</span></div>
+      <p class="motto rv">山に、まかせる。<small>翠嶺園の理念</small></p>
+      <ul class="vals">
+        <li class="rv"><span class="no">一</span><h3>急がない</h3><p>茶葉が育つ速さに合わせて、摘む日を決めます。</p></li>
+        <li class="rv"><span class="no">二</span><h3>ごまかさない</h3><p>自分たちの畑で育て、自分たちの工場で仕上げます。</p></li>
+        <li class="rv"><span class="no">三</span><h3>山を次へ渡す</h3><p>畑の土と斜面を守り、次の百年に残します。</p></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 歩み -->
+  <section class="sec">
+    <div class="wrap">
+      <div class="head rv"><h2>歩み</h2><span class="en">History</span></div>
+      <ol class="tl rv">
+        <li><time>1898</time><p>初代が山の斜面を開き、茶畑をつくる</p></li>
+        <li><time>1923</time><p>茶畑を三倍に広げる</p></li>
+        <li><time>1958</time><p>自社の製茶工場を建て、株式会社にする</p></li>
+        <li><time>1972</time><p>品評会で一等をとる</p></li>
+        <li><time>1996</time><p>茶畑のふもとに「ふもと茶屋」を開く</p></li>
+        <li><time>2008</time><p>全国の茶店への卸売を広げる</p></li>
+        <li><time>2019</time><p>町なかに「翠嶺園 茶房」を開く</p></li>
+        <li><time>2024</time><p>五代目 峰岸 透が代表になる</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- 会社概要 -->
+  <section class="sec alt">
+    <div class="wrap">
+      <div class="head rv"><h2>会社概要</h2><span class="en">Company</span></div>
+      <dl class="co rv">
+        <div><dt>会社名</dt><dd>株式会社 翠嶺園</dd></div>
+        <div><dt>創業</dt><dd>1898年（明治31年）</dd></div>
+        <div><dt>設立</dt><dd>1958年</dd></div>
+        <div><dt>代表者</dt><dd>代表取締役　峰岸 透</dd></div>
+        <div><dt>従業員</dt><dd>約80名</dd></div>
+        <div><dt>自社の茶畑</dt><dd>18ha（標高600m）</dd></div>
+        <div><dt>事業内容</dt><dd>茶の栽培・製茶・卸売・直営店の運営</dd></div>
+        <div><dt>直営店</dt><dd>ふもと茶屋／翠嶺園 茶房</dd></div>
+        <div><dt>所在地</dt><dd>架空の会社のため、載せていません</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <nav class="next" aria-label="ほかのページ">
+    <a href="farm.html"><span class="en">Farm &amp; Craft</span><b>茶畑と製法</b><span>山の茶ができるまで</span></a>
+    <a href="recruit.html"><span class="en">Recruit</span><b>採用</b><span>山の仕事を、次の百年へ。</span></a>
+  </nav>
+</main>
+
+<footer class="ft">
+  <div class="wrap">
+    <div class="logo"><b>翠嶺園</b><small>Suireien Tea Garden</small></div>
+    <dl>
+      <dt>会社名</dt><dd>株式会社 翠嶺園</dd>
+      <dt>創業</dt><dd>1898年</dd>
+      <dt>従業員</dt><dd>約80名</dd>
+      <dt>事業内容</dt><dd>茶の栽培・製茶・卸売・直営店の運営</dd>
+    </dl>
+    <p class="contact">お問い合わせ：このサイトはデモのため、お問い合わせは受け付けていません。</p>
+  </div>
+  <p class="copy">© 2026 mae.exe　本文・画像・プログラムの無断転載・複製を禁止します。<br>※ 翠嶺園は架空の企業です。このサイトはデモです。</p>
+</footer>
+
+<script src="sub.js"></script>
+</body>
+</html>

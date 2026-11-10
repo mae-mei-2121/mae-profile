@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>採用情報 — 翠嶺園</title>
+<meta name="description" content="山の仕事を、次の百年へ。翠嶺園の仕事の種類、働く人、募集要項。（架空の企業のサンプルサイトです）">
+<meta name="robots" content="noindex, nofollow, noarchive, noimageindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Old+Mincho:wght@400;700&family=EB+Garamond:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="sub.css">
+<style>
+.ph h1.v{writing-mode:vertical-rl;font-size:clamp(2rem,4.6vw,3.4rem);letter-spacing:.32em;line-height:1.8;white-space:nowrap}
+.ph-rec{justify-content:flex-end;padding-top:72px;height:min(76svh,680px);min-height:480px}
+.ph-rec .ph-in{flex-direction:row-reverse;align-items:flex-start;gap:clamp(24px,4vw,48px)}
+.ph-rec .ph-side{display:flex;flex-direction:column;gap:6px;padding-top:8px}
+
+/* メッセージ */
+.msg{max-width:40em;margin:0 auto;text-align:center}
+.msg p{font-size:clamp(1rem,1.6vw,1.15rem);line-height:2.6;letter-spacing:.16em}
+
+/* 仕事の種類 */
+.jobs{display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(16px,2.4vw,32px)}
+.jobs li{list-style:none;background:var(--kinari);padding:36px 24px 32px;border-top:2px solid var(--green)}
+.jobs .num{font-family:var(--latin);font-size:.9rem;color:var(--accent);letter-spacing:.14em}
+.jobs h3{font-size:1.3rem;font-weight:400;letter-spacing:.2em;margin:10px 0 10px}
+.jobs p{font-size:.9rem;color:var(--ink-soft);line-height:1.9}
+@media (max-width:900px){.jobs{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:520px){.jobs{grid-template-columns:1fr}}
+
+/* 働く人 */
+.people{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(24px,4vw,48px)}
+.people li{list-style:none}
+.pic{position:relative;aspect-ratio:3/2;overflow:hidden;background:var(--green);margin-bottom:24px}
+.pic .ph-txt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.5);writing-mode:vertical-rl;letter-spacing:.5em}
+.people li:nth-child(2) .pic{background:#5a4a37}
+.people li:nth-child(3) .pic{background:#7b8a6a}
+.pic img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform 1.4s ease}
+.people li:hover .pic img{transform:scale(1.04)}
+.people .role{font-size:.84rem;color:var(--accent);letter-spacing:.14em}
+.people blockquote{font-size:1.2rem;line-height:1.9;letter-spacing:.12em;margin:10px 0 12px}
+.people p{font-size:.9rem;color:var(--ink-soft)}
+@media (max-width:820px){.people{grid-template-columns:1fr;max-width:520px}}
+
+/* 数字 */
+.nums{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line)}
+.nums li{list-style:none;padding:40px 8px 36px;text-align:center;border-right:1px solid var(--line)}
+.nums li:last-child{border-right:0}
+.nums strong{display:block;font-size:clamp(2.2rem,4.4vw,3.4rem);font-weight:400;line-height:1.3;color:var(--green)}
+.nums strong small{font-size:.42em;margin:0 .15em;letter-spacing:.1em}
+.nums span{font-size:.86rem;color:var(--ink-soft)}
+@media (max-width:620px){.nums{grid-template-columns:1fr}.nums li{border-right:0;border-bottom:1px solid var(--line)}}
+
+/* 募集要項 */
+.reqs{display:grid;grid-template-columns:repeat(2,1fr);gap:clamp(24px,4vw,56px)}
+.req h3{font-size:1.3rem;font-weight:400;letter-spacing:.2em;padding-bottom:16px;border-bottom:1px solid var(--ink)}
+.req h3 small{font-size:.8rem;color:var(--ink-soft);margin-left:.6em;letter-spacing:.1em}
+.req div{display:grid;grid-template-columns:5em 1fr;gap:16px;padding:18px 2px;border-bottom:1px solid var(--line);font-size:.94rem}
+.req dt{color:var(--ink-soft)}
+@media (max-width:760px){.reqs{grid-template-columns:1fr}}
+
+/* 応募 */
+.apply{margin-top:clamp(56px,8vw,96px);text-align:center;padding:48px 24px;border:1px solid var(--line);background:var(--paper)}
+.apply b{display:block;font-size:1.3rem;font-weight:400;letter-spacing:.24em;margin-bottom:8px}
+.apply p{font-size:.9rem;color:var(--ink-soft)}
+</style>
+</head>
+<body class="hero-dark" data-season="autumn">
+
+<header class="hd" id="hd">
+  <a class="logo" href="index.html"><b>翠嶺園</b><small>Suireien</small></a>
+  <button class="menu-btn" id="menuBtn" aria-expanded="false" aria-controls="nav">MENU</button>
+  <nav class="nav" id="nav">
+    <a href="about.html">翠嶺園について</a>
+    <a href="farm.html">茶畑と製法</a>
+    <a href="index.html#tea">お茶</a>
+    <a href="index.html#shops">直営店</a>
+    <a href="recruit.html" aria-current="page">採用</a>
+  </nav>
+</header>
+
+<main>
+  <section class="ph ph-rec">
+    <svg class="ph-ridges" viewBox="0 0 1200 400" preserveAspectRatio="none" aria-hidden="true">
+      <g fill="none" stroke="#f4f0e6" stroke-width="3" opacity=".12">
+        <path d="M0 140 Q600 60 1200 140"/><path d="M0 200 Q600 120 1200 200"/><path d="M0 260 Q600 180 1200 260"/><path d="M0 320 Q600 240 1200 320"/><path d="M0 380 Q600 300 1200 380"/>
+      </g>
+    </svg>
+    <div class="ph-in">
+      <h1 class="v">山の仕事を、<br>次の百年へ。</h1>
+      <div class="ph-side">
+        <span class="en">Recruit</span>
+        <p>採用情報</p>
+        <p class="ph-crumb"><a href="index.html">トップ</a>　／　採用</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- メッセージ -->
+  <section class="sec">
+    <div class="msg rv">
+      <span class="en">Message</span>
+      <p>茶づくりは、自然を相手にする仕事です。<br>思いどおりにならない日もありますが、<br>そのぶん、いい茶ができた年の喜びは大きい。<br>山の仕事を、いっしょに次の世代へつなぎませんか。</p>
+    </div>
+  </section>
+
+  <!-- 仕事の種類 -->
+  <section class="sec alt">
+    <div class="wrap">
+      <div class="head rv"><h2>仕事の種類</h2><span class="en">Jobs</span></div>
+      <ul class="jobs">
+        <li class="rv"><span class="num">01</span><h3>茶畑</h3><p>茶の木の手入れ、摘みとり、土づくり。山の一年を体で感じる仕事です。</p></li>
+        <li class="rv"><span class="num">02</span><h3>製茶</h3><p>摘んだ葉を蒸して、揉んで、乾かす。その日の葉に合わせて仕上げます。</p></li>
+        <li class="rv"><span class="num">03</span><h3>お店</h3><p>直営店での接客と販売。お客さまに、お茶の淹れ方もお伝えします。</p></li>
+        <li class="rv"><span class="num">04</span><h3>卸の営業</h3><p>全国の茶店へ、季節のお茶を届けます。産地の声を伝える仕事です。</p></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 働く人 -->
+  <section class="sec">
+    <div class="wrap">
+      <div class="head rv"><h2>働く人</h2><span class="en">People</span></div>
+      <ul class="people">
+        <li class="rv">
+          <div class="pic"><span class="ph-txt">茶畑</span><img src="img/staff-1.jpg" alt="茶畑で新芽を確かめるスタッフ" loading="lazy" onerror="this.remove()"></div>
+          <span class="role">茶畑　入社3年目</span>
+          <blockquote>季節の変化を、体で感じられるのが楽しい。</blockquote>
+          <p>都会から移住して入社。春の新芽を見ると、一年の疲れが飛ぶそうです。</p>
+        </li>
+        <li class="rv">
+          <div class="pic"><span class="ph-txt">製茶</span><img src="img/staff-2.jpg" alt="蒸した茶葉を手に取るスタッフ" loading="lazy" onerror="this.remove()"></div>
+          <span class="role">製茶　入社12年目</span>
+          <blockquote>同じ畑の葉でも、毎日ちがう。だから飽きない。</blockquote>
+          <p>葉の香りと手ざわりで、蒸す時間を決める。工場のまとめ役です。</p>
+        </li>
+        <li class="rv">
+          <div class="pic"><span class="ph-txt">茶房</span><img src="img/staff-3.jpg" alt="お茶を注ぐスタッフ" loading="lazy" onerror="this.remove()"></div>
+          <span class="role">翠嶺園 茶房　入社2年目</span>
+          <blockquote>「おいしい」と言ってもらえる瞬間が好き。</blockquote>
+          <p>お客さまの好みを聞いて、その人に合うお茶を選んでいます。</p>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 数字で見る -->
+  <section class="sec alt">
+    <div class="wrap">
+      <div class="head rv"><h2>数字で見る翠嶺園</h2><span class="en">In Numbers</span></div>
+      <ul class="nums rv">
+        <li><strong data-count="38">38<small>歳</small></strong><span>社員の平均年齢</span></li>
+        <li><strong><small>約</small>3<small>割</small></strong><span>20代の社員</span></li>
+        <li><strong data-count="12">12<small>名</small></strong><span>移住してきた社員</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 募集要項 -->
+  <section class="sec">
+    <div class="wrap">
+      <div class="head rv"><h2>募集要項</h2><span class="en">Requirements</span></div>
+      <div class="reqs">
+        <dl class="req rv">
+          <h3>茶畑・製茶スタッフ<small>正社員</small></h3>
+          <div><dt>仕事</dt><dd>茶の栽培・製茶</dd></div>
+          <div><dt>給与</dt><dd>月給 22万円〜</dd></div>
+          <div><dt>休日</dt><dd>年間105日（繁忙期の4〜5月は少なめ）</dd></div>
+          <div><dt>その他</dt><dd>住まいの紹介あり。移住の相談にのります</dd></div>
+        </dl>
+        <dl class="req rv">
+          <h3>茶房スタッフ<small>正社員</small></h3>
+          <div><dt>仕事</dt><dd>接客・販売・お茶の試飲の案内</dd></div>
+          <div><dt>給与</dt><dd>月給 21万円〜</dd></div>
+          <div><dt>休日</dt><dd>年間110日（シフト制）</dd></div>
+          <div><dt>その他</dt><dd>社員割引あり</dd></div>
+        </dl>
+      </div>
+      <div class="apply rv">
+        <b>応募について</b>
+        <p>このサイトはデモのため、応募は受け付けていません。</p>
+      </div>
+    </div>
+  </section>
+
+  <nav class="next" aria-label="ほかのページ">
+    <a href="about.html"><span class="en">About</span><b>翠嶺園について</b><span>ごあいさつ・歩み・会社概要</span></a>
+    <a href="farm.html"><span class="en">Farm &amp; Craft</span><b>茶畑と製法</b><span>山の茶ができるまで</span></a>
+  </nav>
+</main>
+
+<footer class="ft">
+  <div class="wrap">
+    <div class="logo"><b>翠嶺園</b><small>Suireien Tea Garden</small></div>
+    <dl>
+      <dt>会社名</dt><dd>株式会社 翠嶺園</dd>
+      <dt>創業</dt><dd>1898年</dd>
+      <dt>従業員</dt><dd>約80名</dd>
+      <dt>事業内容</dt><dd>茶の栽培・製茶・卸売・直営店の運営</dd>
+    </dl>
+    <p class="contact">お問い合わせ：このサイトはデモのため、お問い合わせは受け付けていません。</p>
+  </div>
+  <p class="copy">© 2026 mae.exe　本文・画像・プログラムの無断転載・複製を禁止します。<br>※ 翠嶺園は架空の企業です。このサイトはデモです。</p>
+</footer>
+
+<script src="sub.js"></script>
+</body>
+</html>

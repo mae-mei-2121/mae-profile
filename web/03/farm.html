@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>茶畑と製法 — 翠嶺園</title>
+<meta name="description" content="標高六百メートル、霧の山で育つ茶。翠嶺園の茶畑の一年と、摘んでから寝かせるまでの製茶の工程。（架空の企業のサンプルサイトです）">
+<meta name="robots" content="noindex, nofollow, noarchive, noimageindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Old+Mincho:wght@400;700&family=EB+Garamond:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="sub.css">
+<style>
+/* 山の断面図 */
+.cross{position:relative;margin-bottom:clamp(48px,7vw,80px)}
+.cross svg{width:100%;height:auto;display:block;overflow:visible}
+.cross .alt-line{stroke:var(--line);stroke-dasharray:3 6}
+.cross .alt-txt{font-family:var(--latin);font-size:15px;fill:var(--ink-soft);letter-spacing:.08em}
+.cross .mtn{fill:url(#mtnG)}
+.cross .mtn-far{fill:var(--m2);opacity:.45}
+.cross .fog{fill:#fff;opacity:.75;animation:fog 14s ease-in-out infinite alternate}
+.cross .fog.b{opacity:.55;animation-duration:19s;animation-direction:alternate-reverse}
+@keyframes fog{from{transform:translateX(-30px)}to{transform:translateX(30px)}}
+.cross .rows path{stroke:#9fbf63;stroke-width:3;fill:none;stroke-linecap:round}
+.cross .river{stroke:#9fb7c4;stroke-width:4;fill:none}
+.cross .lbl{font-size:16px;fill:var(--ink);letter-spacing:.14em}
+.cross .lbl-line{stroke:var(--ink);stroke-width:1}
+.cross .pin{fill:var(--accent)}
+.points{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(24px,4vw,56px)}
+.points li{list-style:none;border-top:1px solid var(--ink);padding-top:24px}
+.points b{display:block;font-size:1.5rem;font-weight:400;letter-spacing:.16em;color:var(--green)}
+.points p{color:var(--ink-soft);font-size:.94rem;margin-top:8px}
+@media (max-width:720px){.points{grid-template-columns:1fr}.cross .lbl{font-size:22px}.cross .alt-txt{font-size:20px}}
+
+/* 茶畑の一年 */
+.yr{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(32px,6vw,96px)}
+.yr-vis{position:sticky;top:18vh;height:64vh;display:flex;align-items:center;justify-content:center}
+.yr-circle{position:relative;width:min(100%,420px);aspect-ratio:1;border-radius:50%;background:var(--yr-bg,#ecd5bd);transition:background-color 1s;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.yr-circle svg{position:absolute;left:0;right:0;bottom:0;width:100%;height:46%}
+.yr-circle svg path{transition:fill 1s}
+.yr-kanji{position:relative;z-index:1;writing-mode:vertical-rl;display:flex;align-items:center;gap:14px;margin-top:-18%}
+.yr-kanji b{font-size:clamp(4rem,9vw,6.4rem);font-weight:400;line-height:1;color:var(--yr-ink,#5a3a1e);transition:color 1s}
+.yr-kanji span{font-size:.9rem;letter-spacing:.3em;color:var(--ink-soft)}
+.yr-item{min-height:72vh;display:flex;flex-direction:column;justify-content:center;opacity:.3;transition:opacity .8s}
+.yr-item.is-on{opacity:1}
+.yr-item .en{font-size:.86rem}
+.yr-item h3{font-size:clamp(1.5rem,2.8vw,2rem);font-weight:400;letter-spacing:.24em;margin:6px 0 4px}
+.yr-item time{font-size:.86rem;color:var(--ink-soft);letter-spacing:.14em}
+.yr-item p{margin-top:20px;max-width:24em}
+@media (max-width:720px){
+  .yr{grid-template-columns:1fr;gap:0}
+  .yr-vis{top:64px;height:auto;z-index:2;padding:12px 0;background:var(--paper)}
+  .yr-circle{width:150px}
+  .yr-kanji{gap:6px}
+  .yr-kanji b{font-size:3rem}
+  .yr-kanji span{font-size:.7rem}
+  .yr-item{min-height:56vh}
+}
+
+/* 製茶の工程 */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-top:1px solid var(--line)}
+.steps li{list-style:none;padding:40px clamp(16px,3vw,36px);border-bottom:1px solid var(--line);border-right:1px solid var(--line)}
+.steps li:nth-child(3n){border-right:0}
+.steps .num{font-family:var(--latin);font-size:.95rem;color:var(--accent);letter-spacing:.14em}
+.steps svg{width:56px;height:56px;margin:18px 0 14px;stroke:var(--green);stroke-width:1.6;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.steps h3{font-size:1.4rem;font-weight:400;letter-spacing:.3em}
+.steps p{font-size:.92rem;color:var(--ink-soft);margin-top:8px}
+@media (max-width:820px){.steps{grid-template-columns:repeat(2,1fr)}.steps li:nth-child(3n){border-right:1px solid var(--line)}.steps li:nth-child(2n){border-right:0}}
+@media (max-width:520px){.steps{grid-template-columns:1fr}.steps li{border-right:0!important}}
+</style>
+</head>
+<body data-season="autumn">
+
+<header class="hd" id="hd">
+  <a class="logo" href="index.html"><b>翠嶺園</b><small>Suireien</small></a>
+  <button class="menu-btn" id="menuBtn" aria-expanded="false" aria-controls="nav">MENU</button>
+  <nav class="nav" id="nav">
+    <a href="about.html">翠嶺園について</a>
+    <a href="farm.html" aria-current="page">茶畑と製法</a>
+    <a href="index.html#tea">お茶</a>
+    <a href="index.html#shops">直営店</a>
+    <a href="recruit.html">採用</a>
+  </nav>
+</header>
+
+<main>
+  <section class="ph">
+    <svg class="ph-ridges" viewBox="0 0 1600 400" preserveAspectRatio="none" aria-hidden="true">
+      <path class="r1" d="M0 120 C180 60 360 90 520 70 C720 45 860 120 1080 80 C1300 40 1440 110 1600 90 V400 H0Z"/>
+      <path class="r2" d="M0 220 C240 160 420 200 640 180 C860 160 1000 230 1220 200 C1400 176 1500 210 1600 200 V400 H0Z"/>
+      <path class="r3" d="M0 300 C260 260 520 290 760 280 C1040 268 1300 310 1600 290 V400 H0Z"/>
+    </svg>
+    <div class="ph-mist"></div>
+    <div class="ph-in">
+      <span class="en">Farm &amp; Craft</span>
+      <h1>茶畑と製法</h1>
+      <p class="ph-crumb"><a href="index.html">トップ</a>　／　茶畑と製法</p>
+    </div>
+  </section>
+
+  <!-- 山の茶畑 -->
+  <section class="sec">
+    <div class="wrap">
+      <div class="head rv"><h2>山の茶畑</h2><span class="en">Mountain Garden</span></div>
+      <p class="lead rv">翠嶺園の茶畑は、谷から霧が上がってくる、ちょうどその高さにあります。</p>
+      <figure class="cross rv" aria-label="山の断面図。標高600メートルの斜面に茶畑があり、そこに谷から霧が上がってくる">
+        <svg viewBox="0 0 1000 440">
+          <defs>
+            <filter id="blur" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="14"/></filter>
+            <linearGradient id="mtnG" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#4a6b50"/><stop offset=".6" stop-color="#2f4a36"/><stop offset="1" stop-color="#25392b"/>
+            </linearGradient>
+          </defs>
+          <!-- 標高の目盛り -->
+          <g>
+            <line class="alt-line" x1="0" y1="380" x2="1000" y2="380"/>
+            <line class="alt-line" x1="0" y1="290" x2="1000" y2="290"/>
+            <line class="alt-line" x1="0" y1="200" x2="1000" y2="200"/>
+            <line class="alt-line" x1="0" y1="110" x2="1000" y2="110"/>
+            <text class="alt-txt" x="0" y="372">0m</text>
+            <text class="alt-txt" x="0" y="282">300m</text>
+            <text class="alt-txt" x="0" y="192">600m</text>
+            <text class="alt-txt" x="0" y="102">900m</text>
+          </g>
+          <!-- 奥の山 -->
+          <path class="mtn-far" d="M80 380 C240 300 380 210 560 150 C660 118 760 60 860 40 C920 30 970 50 1000 60 V380Z"/>
+          <!-- 霧（奥） -->
+          <g class="fog b" filter="url(#blur)"><rect x="120" y="185" width="760" height="44" rx="22"/></g>
+          <!-- 手前の山 -->
+          <path class="mtn" d="M60 380 C200 368 330 310 440 250 C520 206 600 186 680 150 C760 112 830 80 900 74 C940 70 975 80 1000 88 V440 H60Z"/>
+          <!-- 茶畑 -->
+          <g class="rows">
+            <path d="M478 222 Q520 214 560 199"/>
+            <path d="M488 232 Q530 223 572 207"/>
+            <path d="M500 241 Q542 232 584 214"/>
+            <path d="M462 214 Q504 205 548 191"/>
+            <path d="M514 249 Q554 240 596 221"/>
+          </g>
+          <!-- 谷と川 -->
+          <path class="river" d="M0 386 C30 382 50 384 70 380"/>
+          <!-- 霧（手前） -->
+          <g class="fog" filter="url(#blur)"><rect x="300" y="200" width="520" height="38" rx="19"/></g>
+          <!-- 説明 -->
+          <circle class="pin" cx="530" cy="212" r="5"/>
+          <line class="lbl-line" x1="530" y1="212" x2="560" y2="120"/>
+          <text class="lbl" x="568" y="118">翠嶺園の茶畑（標高600m）</text>
+          <line class="lbl-line" x1="250" y1="212" x2="230" y2="150"/>
+          <text class="lbl" x="150" y="140">霧が上がる高さ</text>
+          <text class="lbl" x="84" y="420" style="fill:#f4f0e6">谷・川</text>
+        </svg>
+      </figure>
+      <ul class="points">
+        <li class="rv"><b>標高600m</b><p>昼と夜の気温差が大きく、葉がゆっくり育ちます。</p></li>
+        <li class="rv"><b>霧</b><p>強い日ざしをやわらげ、うまみを葉に残します。</p></li>
+        <li class="rv"><b>斜面</b><p>水はけがよく、茶の木が深く根をはります。</p></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 茶畑の一年 -->
+  <section class="sec alt">
+    <div class="wrap">
+      <div class="head rv"><h2>茶畑の一年</h2><span class="en">A Year in the Garden</span></div>
+      <div class="yr">
+        <div class="yr-vis" aria-hidden="true">
+          <div class="yr-circle" id="yrCircle">
+            <div class="yr-kanji"><b id="yrKanji">春</b><span id="yrMonth">四月〜五月</span></div>
+            <svg viewBox="0 0 400 180" preserveAspectRatio="none">
+              <path id="yrM1" d="M0 70 C80 30 160 40 240 60 C310 78 360 40 400 50 V180 H0Z" fill="#c6b49a"/>
+              <path id="yrM2" d="M0 120 C100 90 200 110 300 96 C350 90 380 100 400 104 V180 H0Z" fill="#7e8a5c"/>
+              <g id="yrRows" fill="none" stroke-width="5" stroke-linecap="round" stroke="#5f7a3a">
+                <path d="M-10 140 Q200 122 410 136"/><path d="M-10 156 Q200 138 410 152"/><path d="M-10 172 Q200 154 410 168"/>
+              </g>
+            </svg>
+          </div>
+        </div>
+        <div class="yr-list">
+          <article class="yr-item" data-s="spring">
+            <span class="en">Spring</span><h3>春　一番茶を摘む</h3><time>4月下旬〜5月</time>
+            <p>冬を越えた茶の木から、その年はじめての新芽が出ます。一年でいちばん忙しく、いちばん香りが高い時期です。</p>
+          </article>
+          <article class="yr-item" data-s="summer">
+            <span class="en">Summer</span><h3>夏　葉を守る</h3><time>6月〜8月</time>
+            <p>二番茶を摘み、畑の草をとります。強い日ざしと暑さから、茶の木を守る季節です。</p>
+          </article>
+          <article class="yr-item" data-s="autumn">
+            <span class="en">Autumn</span><h3>秋　来年にそなえる</h3><time>9月〜11月</time>
+            <p>畑を刈りそろえ、来年の芽にそなえます。春に摘んで寝かせておいた新茶を、蔵から出す時期でもあります。</p>
+          </article>
+          <article class="yr-item" data-s="winter">
+            <span class="en">Winter</span><h3>冬　春を待つ</h3><time>12月〜2月</time>
+            <p>土をつくり、霜よけをします。茶の木が静かに力をたくわえ、山は次の春を待ちます。</p>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 製茶の工程 -->
+  <section class="sec">
+    <div class="wrap">
+      <div class="head rv"><h2>製茶の工程</h2><span class="en">How We Make Tea</span></div>
+      <p class="lead rv">摘んだ葉は、その日のうちに自社の工場へ。六つの工程を経て、一杯のお茶になります。</p>
+      <ol class="steps">
+        <li class="rv"><span class="num">01</span>
+          <svg viewBox="0 0 64 64"><path d="M32 56 C12 42 12 20 32 8 C52 20 52 42 32 56Z"/><path d="M32 56 V20"/><path d="M32 34 L24 27 M32 42 L40 35"/></svg>
+          <h3>摘む</h3><p>新芽の育ち具合を見て、いちばんいい日に摘みます。</p></li>
+        <li class="rv"><span class="num">02</span>
+          <svg viewBox="0 0 64 64"><path d="M10 36 H54 C52 48 43 55 32 55 C21 55 12 48 10 36Z"/><path d="M24 29 C20 23 28 19 24 12"/><path d="M32 29 C28 23 36 19 32 12"/><path d="M40 29 C36 23 44 19 40 12"/></svg>
+          <h3>蒸す</h3><p>摘んだその日のうちに蒸して、葉の色と香りを閉じこめます。</p></li>
+        <li class="rv"><span class="num">03</span>
+          <svg viewBox="0 0 64 64"><path d="M32 32 m-3 0 a3 3 0 1 1 6 0 a7 7 0 1 1 -14 0 a11 11 0 1 1 22 0 a15 15 0 1 1 -30 0 a19 19 0 1 1 38 0"/></svg>
+          <h3>揉む</h3><p>熱を加えながら揉み、葉の形を細く整えます。</p></li>
+        <li class="rv"><span class="num">04</span>
+          <svg viewBox="0 0 64 64"><path d="M8 22 C16 16 22 28 30 22 S44 16 56 22"/><path d="M8 34 C16 28 22 40 30 34 S44 28 56 34"/><path d="M8 46 C16 40 22 52 30 46 S44 40 56 46"/></svg>
+          <h3>乾かす</h3><p>ゆっくり乾かして、香りを落ち着かせます。</p></li>
+        <li class="rv"><span class="num">05</span>
+          <svg viewBox="0 0 64 64"><ellipse cx="32" cy="22" rx="24" ry="7"/><path d="M8 22 L14 44 C18 50 46 50 50 44 L56 22"/><path d="M20 30 h0 M28 31 h0 M36 31 h0 M44 30 h0 M24 38 h0 M32 39 h0 M40 38 h0" stroke-width="3"/></svg>
+          <h3>仕上げる</h3><p>茎や粉をよりわけ、火を入れて香りを仕上げます。</p></li>
+        <li class="rv"><span class="num">06</span>
+          <svg viewBox="0 0 64 64"><path d="M25 8 H39"/><path d="M23 13 H41"/><path d="M24 13 C12 22 12 46 21 56 H43 C52 46 52 22 40 13"/><path d="M18 34 H46"/></svg>
+          <h3>寝かせる</h3><p>蔵で寝かせ、味をまろやかにします。</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <nav class="next" aria-label="ほかのページ">
+    <a href="index.html#tea"><span class="en">Seasonal Tea</span><b>季節のお茶</b><span>いまの季節のおすすめを見る</span></a>
+    <a href="recruit.html"><span class="en">Recruit</span><b>採用</b><span>山の仕事を、次の百年へ。</span></a>
+  </nav>
+</main>
+
+<footer class="ft">
+  <div class="wrap">
+    <div class="logo"><b>翠嶺園</b><small>Suireien Tea Garden</small></div>
+    <dl>
+      <dt>会社名</dt><dd>株式会社 翠嶺園</dd>
+      <dt>創業</dt><dd>1898年</dd>
+      <dt>従業員</dt><dd>約80名</dd>
+      <dt>事業内容</dt><dd>茶の栽培・製茶・卸売・直営店の運営</dd>
+    </dl>
+    <p class="contact">お問い合わせ：このサイトはデモのため、お問い合わせは受け付けていません。</p>
+  </div>
+  <p class="copy">© 2026 mae.exe　本文・画像・プログラムの無断転載・複製を禁止します。<br>※ 翠嶺園は架空の企業です。このサイトはデモです。</p>
+</footer>
+
+<script src="sub.js"></script>
+<script>
+/* 茶畑の一年：スクロールに合わせて、左の円の季節と色を変える */
+(() => {
+  const Y = {
+    spring:{k:'春', m:'四月〜五月', bg:'#e4ebcf', ink:'#5f7d22', m1:'#c7d4b1', m2:'#8fae5c', row:'#9cc23e'},
+    summer:{k:'夏', m:'六月〜八月', bg:'#d6e5d9', ink:'#2f6a42', m1:'#a9c3b6', m2:'#4f7f5c', row:'#2f6a35'},
+    autumn:{k:'秋', m:'九月〜十一月', bg:'#efdcc6', ink:'#a5531f', m1:'#d4a27a', m2:'#7e7a4c', row:'#56703a'},
+    winter:{k:'冬', m:'十二月〜二月', bg:'#e1e6ea', ink:'#56697a', m1:'#eef1f3', m2:'#9aa7ad', row:'#6f7f72'}
+  };
+  const circle = document.getElementById('yrCircle');
+  const set = key => {
+    const s = Y[key];
+    circle.style.setProperty('--yr-bg', s.bg);
+    circle.style.setProperty('--yr-ink', s.ink);
+    document.getElementById('yrKanji').textContent = s.k;
+    document.getElementById('yrMonth').textContent = s.m;
+    document.getElementById('yrM1').setAttribute('fill', s.m1);
+    document.getElementById('yrM2').setAttribute('fill', s.m2);
+    document.getElementById('yrRows').setAttribute('stroke', s.row);
+  };
+  const items = document.querySelectorAll('.yr-item');
+  const io = new IntersectionObserver(es => es.forEach(e => {
+    if (!e.isIntersecting) return;
+    items.forEach(i => i.classList.toggle('is-on', i === e.target));
+    set(e.target.dataset.s);
+  }), {rootMargin:'-45% 0px -45% 0px'});
+  items.forEach(i => io.observe(i));
+  items[0].classList.add('is-on');
+  set('spring');
+})();
+</script>
+</body>
+</html>

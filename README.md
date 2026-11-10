@@ -30,7 +30,8 @@
 |:---:|:---|:---|:---:|
 | **WEB 01** | [**既読文庫**](https://mae-mei-2121.github.io/mae-profile/web/01/index.html) | トーク画面のように読める、架空の小説投稿サイト | ![](assets/badges/status-released.svg) |
 | **WEB 02** | [**深淵ツーリズム**](https://mae-mei-2121.github.io/mae-profile/web/02/index.html) | スクロールで深海へ潜っていく、架空の深海ツアー会社のLP | ![](assets/badges/status-released.svg) |
-| WEB 03–06 | — | Webサイト・ランディングページ | ![](assets/badges/status-wip.svg) |
+| **WEB 03** | [**翠嶺園**](https://mae-mei-2121.github.io/mae-profile/web/03/index.html) | 開いた日の季節で景色が変わる、架空の老舗茶園のコーポレートサイト（4ページ） | ![](assets/badges/status-released.svg) |
+| WEB 04–06 | — | Webサイト・ランディングページ | ![](assets/badges/status-wip.svg) |
 | **GAME 01** | [**まばたき**](https://mae-mei-2121.github.io/mae-profile/game/01/index.html) | 目を閉じて歩き、目を開けて確かめる3Dホラー（デモ版） | ![](assets/badges/status-released.svg) |
 | GAME 02–03 | — | ブラウザゲーム | ![](assets/badges/status-wip.svg) |
 | 3DCG 01–03 | — | 3Dモデル（Three.js） | ![](assets/badges/status-wip.svg) |
@@ -40,7 +41,7 @@
 
 ## Tech
 
-- **1作品 = 1ファイル**：CSS・JavaScript・本文データまで、HTML 1枚に収めています
+- **1作品 = 1ファイル**：CSS・JavaScript・本文データまで、HTML 1枚に収めています（複数ページの WEB 03 だけ、共通の CSS・JavaScript を分けています）
 - **ビルド不要・フレームワークなし**：素の HTML / CSS / JavaScript だけで動きます
 - **画像は差し替え式**：決まった場所に画像を置くと、仮の枠から自動で切り替わります
 - **スマホ対応**：幅 375px でも崩れないレイアウト
@@ -58,8 +59,13 @@ mae-profile/
 │   ├── 01/               # 既読文庫
 │   │   ├── index.html
 │   │   └── img/          # ロゴ・表紙・挿絵
-│   └── 02/               # 深淵ツーリズム
-│       └── index.html    # 画像なし（海も生物もコードで描画）
+│   ├── 02/               # 深淵ツーリズム
+│   │   └── index.html    # 画像なし（海も生物もコードで描画）
+│   └── 03/               # 翠嶺園
+│       ├── index.html    # トップ（山並み・霧はコードで描画）
+│       ├── about.html / farm.html / recruit.html
+│       ├── sub.css / sub.js  # 下層ページの共通部分
+│       └── img/          # 季節の景色・お茶・店・働く人
 └── game/
     └── 01/               # まばたき
         ├── index.html
